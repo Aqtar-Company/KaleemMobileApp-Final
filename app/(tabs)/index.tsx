@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -37,13 +38,15 @@ function TypingIndicator() {
 export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const { messages, isTyping, sendMessage, clearChat } = useChat();
   const { user } = useAuth();
   const { unreadCount } = useNotifications();
   const [input, setInput] = useState("");
   const flatListRef = useRef<FlatList>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPadding = Platform.OS === "web" ? 34 : 0;
+  // The absolute-positioned tab bar would cover the input; reserve its height.
+  const inputBottomReserve = Platform.OS === "web" ? 34 : tabBarHeight;
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
@@ -87,8 +90,8 @@ export default function ChatScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior="padding"
-      keyboardVerticalOffset={0}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <View style={[styles.header, { paddingTop: topPadding + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.headerRight}>
@@ -156,7 +159,8 @@ export default function ChatScreen() {
           {
             backgroundColor: colors.card,
             borderTopColor: colors.border,
-            paddingBottom: bottomPadding + (Platform.OS !== "web" ? insets.bottom + 4 : 0),
+            paddingBottom: 12,
+            marginBottom: inputBottomReserve,
           },
         ]}
       >
