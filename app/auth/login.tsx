@@ -37,8 +37,9 @@ export default function LoginScreen() {
     try {
       await login(email, password);
       router.replace("/(tabs)");
-    } catch {
-      Alert.alert("خطأ", "فشل تسجيل الدخول، يرجى المحاولة مرة أخرى");
+    } catch (e) {
+      const message = e instanceof Error && e.message ? e.message : "فشل تسجيل الدخول، يرجى المحاولة مرة أخرى";
+      Alert.alert("خطأ", message);
     } finally {
       setLoading(false);
     }
@@ -104,7 +105,10 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() => router.push("/auth/forgot-password")}
+          >
             <Text style={[styles.forgotText, { color: colors.primary }]}>نسيت كلمة المرور؟</Text>
           </TouchableOpacity>
 
@@ -152,57 +156,16 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 32,
   },
   logoContainer: { marginBottom: 16, alignItems: "center" },
-  logoImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 18,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#ffffff",
-    fontFamily: "Inter_700Bold",
-    marginBottom: 6,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.85)",
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-  },
-  form: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-  },
-  formTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    fontFamily: "Inter_700Bold",
-    textAlign: "right",
-    marginBottom: 24,
-  },
+  logoImage: { width: 90, height: 90, borderRadius: 18 },
+  headerTitle: { fontSize: 24, fontWeight: "700", color: "#ffffff", fontFamily: "Inter_700Bold", marginBottom: 6 },
+  headerSubtitle: { fontSize: 14, color: "rgba(255,255,255,0.85)", fontFamily: "Inter_400Regular", textAlign: "center" },
+  form: { paddingHorizontal: 24, paddingTop: 32 },
+  formTitle: { fontSize: 20, fontWeight: "700", fontFamily: "Inter_700Bold", textAlign: "right", marginBottom: 24 },
   inputWrapper: { marginBottom: 16 },
-  label: {
-    fontSize: 13,
-    fontWeight: "500",
-    fontFamily: "Inter_500Medium",
-    textAlign: "right",
-    marginBottom: 8,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1.5,
-  },
+  label: { fontSize: 13, fontWeight: "500", fontFamily: "Inter_500Medium", textAlign: "right", marginBottom: 8 },
+  inputContainer: { flexDirection: "row", alignItems: "center", borderWidth: 1.5 },
   inputIcon: { paddingHorizontal: 14 },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    paddingVertical: 14,
-    paddingEnd: 14,
-    textAlign: "right",
-  },
+  input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular", paddingVertical: 14, paddingEnd: 14, textAlign: "right" },
   forgotPassword: { alignSelf: "flex-start", marginBottom: 20 },
   forgotText: { fontSize: 14, fontFamily: "Inter_500Medium" },
   dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
