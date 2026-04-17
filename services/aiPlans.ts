@@ -3,92 +3,104 @@ import { apiGet, apiPost } from "./api";
 export interface ApiAiPlan {
   id: number;
   name: string;
-  description?: string;
+  name_ar?: string;
+  description_ar?: string;
+  messages_per_month?: number | null;
+  is_unlimited?: boolean;
   price_egp: number;
   price_sar?: number;
   price_usd?: number;
-  messages_limit?: number | null;
-  has_extended_chat?: boolean;
-  features?: string[];
-  is_popular?: boolean;
+  billing_cycle?: string;
+  features_ar?: string[];
 }
 
 export interface AiPlan {
   id: string;
   name: string;
-  description?: string;
+  nameAr: string;
+  description: string;
   priceEgp: number;
   priceSar: number;
   priceUsd: number;
-  messagesLimit: number | null;
-  hasExtendedChat: boolean;
+  messagesPerMonth: number | null;
+  isUnlimited: boolean;
   features: string[];
-  isPopular: boolean;
+  billingCycle: string;
 }
 
 function mapPlan(p: ApiAiPlan): AiPlan {
   return {
     id: String(p.id),
     name: p.name,
-    description: p.description,
+    nameAr: p.name_ar ?? p.name,
+    description: p.description_ar ?? "",
     priceEgp: p.price_egp ?? 0,
     priceSar: p.price_sar ?? 0,
     priceUsd: p.price_usd ?? 0,
-    messagesLimit: p.messages_limit ?? null,
-    hasExtendedChat: p.has_extended_chat ?? false,
-    features: p.features ?? [],
-    isPopular: p.is_popular ?? false,
+    messagesPerMonth: p.messages_per_month ?? null,
+    isUnlimited: p.is_unlimited ?? false,
+    features: p.features_ar ?? [],
+    billingCycle: p.billing_cycle ?? "monthly",
   };
 }
 
 export async function getAiPlansApi(): Promise<AiPlan[]> {
-  const res = await apiGet<ApiAiPlan[] | { data: ApiAiPlan[] }>("/ai-plans");
+  const res = await apiGet<ApiAiPlan[] | { data: ApiAiPlan[] }>("/ai-plans", false);
   if (!res.status) throw new Error(res.message);
   const list = Array.isArray(res.data)
     ? res.data
-    : (res.data as { data: ApiAiPlan[] })?.data ?? [];
+    : (res.data as { data?: ApiAiPlan[] })?.data ?? [];
   return list.map(mapPlan);
 }
 
 export interface AiSubscription {
-  planId: string;
+  subscribed: boolean;
+  planId: string | null;
   planName: string;
-  status: "active" | "cancelled" | "expired";
   messagesUsed: number;
   messagesLimit: number | null;
-  renewsAt?: string;
+  remaining: number | null;
+  isUnlimited: boolean;
+  expiresAt?: string;
 }
 
 interface ApiSubscription {
-  plan_id?: number;
-  plan_name?: string;
-  status?: "active" | "cancelled" | "expired";
+  subscribed?: boolean;
+  plan?: {
+    id: number;
+    name?: string;
+    name_ar?: string;
+    messages_per_month?: number | null;
+    is_unlimited?: boolean;
+  } | null;
   messages_used?: number;
   messages_limit?: number | null;
-  renews_at?: string;
+  remaining?: number | null;
+  expires_at?: string;
 }
 
-export async function getMySubscriptionApi(): Promise<AiSubscription | null> {
+export async function getMySubscriptionApi(): Promise<AiSubscription> {
   const res = await apiGet<ApiSubscription>("/ai-plans/my-subscription");
   if (!res.status) throw new Error(res.message);
-  const d = res.data;
-  if (!d || !d.plan_id) return null;
+  const d = res.data ?? {};
   return {
-    planId: String(d.plan_id),
-    planName: d.plan_name ?? "",
-    status: d.status ?? "active",
+    subscribed: d.subscribed ?? false,
+    planId: d.plan ? String(d.plan.id) : null,
+    planName: d.plan?.name_ar ?? d.plan?.name ?? "",
     messagesUsed: d.messages_used ?? 0,
     messagesLimit: d.messages_limit ?? null,
-    renewsAt: d.renews_at,
+    remaining: d.remaining ?? null,
+    isUnlimited: d.plan?.is_unlimited ?? false,
+    expiresAt: d.expires_at,
   };
 }
 
 export async function subscribeAiPlanApi(plan_id: string | number): Promise<void> {
-  const res = await apiPost<void>("/ai-plans/subscribe", { plan_id });
+  const res = await apiPost<unknown>("/ai-plans/subscribe", { plan_id });
   if (!res.status) throw new Error(res.message);
 }
 
 export async function cancelAiPlanApi(): Promise<void> {
-  const res = await apiPost<void>("/ai-plans/cancel", {});
+  const res = await apiPost<unknown>("/ai-plans/cancel", {});
   if (!res.status) throw new Error(res.message);
 }

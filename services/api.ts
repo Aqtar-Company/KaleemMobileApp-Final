@@ -47,12 +47,49 @@ async function buildHeaders(auth = true): Promise<Record<string, string>> {
   return headers;
 }
 
-async function handleResponse<T>(res: Response): Promise<ApiResponse<T>> {
-  const json = await res.json();
-  if (!res.ok) {
-    throw new ApiError(res.status, json.message ?? "حدث خطأ", json.errors);
+// Some backend endpoints (session-packs index, ai-plans index, my-balance,
+// my-subscription, wallet ...) return bare payloads without the
+// { status, message, data } Laravel envelope. Normalise every 2xx body into
+// the envelope shape so services can keep their `if (!res.status)` guard.
+function normalizeEnvelope<T>(json: unknown): ApiResponse<T> {
+  if (
+    json !== null &&
+    typeof json === "object" &&
+    typeof (json as ApiResponse<T>).status === "boolean"
+  ) {
+    return json as ApiResponse<T>;
   }
-  return json as ApiResponse<T>;
+  if (json !== null && typeof json === "object") {
+    const obj = json as Record<string, unknown>;
+    return {
+      status: true,
+      message: typeof obj.message === "string" ? obj.message : "",
+      data: (obj.data !== undefined ? obj.data : obj) as T,
+    };
+  }
+  return { status: true, message: "", data: json as T };
+}
+
+async function handleResponse<T>(res: Response): Promise<ApiResponse<T>> {
+  const text = await res.text();
+  let json: unknown = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    json = null;
+  }
+  if (!res.ok) {
+    const message =
+      (json &&
+        typeof json === "object" &&
+        typeof (json as { message?: unknown }).message === "string" &&
+        ((json as { message: string }).message as string)) ||
+      "حدث خطأ";
+    const errors =
+      json && typeof json === "object" && (json as { errors?: Record<string, string[]> }).errors;
+    throw new ApiError(res.status, message, errors || undefined);
+  }
+  return normalizeEnvelope<T>(json);
 }
 
 type Method = "GET" | "POST" | "DELETE";
