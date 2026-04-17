@@ -228,13 +228,19 @@ export default function SessionsScreen() {
           <ActivityIndicator color={colors.primary} size="large" />
           <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>جاري التحميل...</Text>
         </View>
-      ) : error ? (
+      ) : error && !/not\s*found|route|404/i.test(error) ? (
         <View style={styles.center}>
           <Feather name="wifi-off" size={48} color={colors.border} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>تعذّر التحميل</Text>
           <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>
             تحقق من اتصالك بالإنترنت وحاول مجدداً
           </Text>
+          <TouchableOpacity
+            style={[styles.emptyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
+            onPress={refetch}
+          >
+            <Text style={styles.emptyBtnText}>إعادة المحاولة</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView

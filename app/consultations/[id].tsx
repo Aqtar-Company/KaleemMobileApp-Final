@@ -15,16 +15,23 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { MOCK_CONSULTATIONS } from "./index";
 
 export default function ConsultationDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: _id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
   const bottomPadding = Platform.OS === "web" ? 34 : 0;
 
-  const consultation = MOCK_CONSULTATIONS.find((c) => c.id === id);
+  const consultation = null as null | {
+    consultantName: string;
+    consultantTitle: string;
+    serviceTitle: string;
+    status: "pending" | "answered";
+    date: string;
+    question: string;
+    answer?: string;
+  };
   const [followUp, setFollowUp] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -37,10 +44,24 @@ export default function ConsultationDetailScreen() {
             backgroundColor: colors.background,
             justifyContent: "center",
             alignItems: "center",
+            padding: 24,
+            gap: 10,
           },
         ]}
       >
-        <Text style={{ color: colors.foreground }}>الاستشارة غير موجودة</Text>
+        <Feather name="message-square" size={48} color={colors.border} />
+        <Text style={{ color: colors.foreground, fontSize: 16, fontFamily: "Inter_600SemiBold" }}>
+          تفاصيل الاستشارة غير متاحة
+        </Text>
+        <Text style={{ color: colors.mutedForeground, fontSize: 13, textAlign: "center" }}>
+          سيتم عرض التفاصيل بمجرد ربط الـ API.
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginTop: 12, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.primary }}
+        >
+          <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold" }}>رجوع</Text>
+        </TouchableOpacity>
       </View>
     );
   }

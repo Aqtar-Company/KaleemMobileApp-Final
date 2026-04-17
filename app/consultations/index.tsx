@@ -1,10 +1,13 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
+  Image,
   Platform,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,56 +16,47 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { Badge } from "@/components/UI";
-
-export interface WrittenConsultation {
-  id: string;
-  consultantId: string;
-  consultantName: string;
-  consultantTitle: string;
-  serviceTitle: string;
-  question: string;
-  answer?: string;
-  status: "pending" | "answered";
-  date: string;
-  price: number;
-}
-
-export const MOCK_CONSULTATIONS: WrittenConsultation[] = [
-  {
-    id: "wc1",
-    consultantId: "2",
-    consultantName: "أ. سارة القحطاني",
-    consultantTitle: "معالجة نفسية",
-    serviceTitle: "نفس راشدة",
-    question:
-      "أعاني من توتر شديد في العمل وأجد صعوبة في التركيز وإنجاز المهام. كيف يمكنني التعامل مع هذا الضغط؟",
-    answer:
-      "أقدر تماماً ما تمر به. الضغط في العمل من أكثر الأسباب شيوعاً للتوتر. أنصحك بالبدء بتقنية التنفس العميق (4-7-8) وتخصيص 10 دقائق يومياً للاسترخاء. كذلك قسّم مهامك إلى أجزاء صغيرة وابدأ بالأهم فالمهم. لا تتردد في حجز جلسة لمناقشة الأمر بشكل أعمق.",
-    status: "answered",
-    date: "28 مارس 2026",
-    price: 0,
-  },
-  {
-    id: "wc2",
-    consultantId: "1",
-    consultantName: "د. محمد الشريف",
-    consultantTitle: "طبيب نفسي",
-    serviceTitle: "مستقر",
-    question:
-      "أشعر بحزن شديد منذ أسابيع دون سبب واضح، وفقدت الشهية والرغبة في فعل أي شيء. هل هذا طبيعي؟",
-    status: "pending",
-    date: "1 أبريل 2026",
-    price: 0,
-  },
-];
+import { getConsultationsApi, type Consultation } from "@/services/consultations";
 
 export default function ConsultationsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "answered">("all");
+  const [items, setItems] = useState<Consultation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [notAvailable, setNotAvailable] = useState(false);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const filtered = MOCK_CONSULTATIONS.filter((c) => {
+  const load = useCallback(async () => {
+    try {
+      setNotAvailable(false);
+      const list = await getConsultationsApi();
+      setItems(list);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      if (/not\s*found|route|404/i.test(msg)) {
+        setItems([]);
+        setNotAvailable(true);
+      } else {
+        setItems([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
+
+  const filtered = items.filter((c) => {
     if (activeTab === "all") return true;
     return c.status === activeTab;
   });
@@ -133,6 +127,12 @@ export default function ConsultationsScreen() {
         ))}
       </View>
 
+      {loading && !refreshing ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>جاري التحميل...</Text>
+        </View>
+      ) : (
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
@@ -140,8 +140,10 @@ export default function ConsultationsScreen() {
           padding: 16,
           paddingBottom: Platform.OS === "web" ? 120 : 100,
           gap: 12,
+          flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
@@ -169,6 +171,9 @@ export default function ConsultationsScreen() {
                 }
               />
               <View style={styles.consultantRow}>
+                {item.consultantAvatar ? (
+                  <Image source={{ uri: item.consultantAvatar }} style={styles.avatarImage} />
+                ) : (
                 <View
                   style={[
                     styles.avatar,
@@ -179,6 +184,7 @@ export default function ConsultationsScreen() {
                     {item.consultantName.charAt(0)}
                   </Text>
                 </View>
+                )}
                 <View style={styles.consultantInfo}>
                   <Text style={[styles.consultantName, { color: colors.foreground }]}>
                     {item.consultantName}
@@ -231,13 +237,16 @@ export default function ConsultationsScreen() {
           <View style={styles.empty}>
             <Feather name="message-square" size={48} color={colors.border} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-              لا توجد استشارات كتابية
+              {notAvailable ? "قيد التجهيز" : "لا توجد استشارات كتابية"}
             </Text>
             <Text
               style={[styles.emptySubtitle, { color: colors.mutedForeground }]}
             >
-              ابدأ باختيار مستشار وإرسال سؤالك
+              {notAvailable
+                ? "سيتم تفعيل الاستشارات الكتابية قريباً"
+                : "ابدأ باختيار مستشار وإرسال سؤالك"}
             </Text>
+            {!notAvailable && (
             <TouchableOpacity
               style={[
                 styles.emptyBtn,
@@ -247,9 +256,11 @@ export default function ConsultationsScreen() {
             >
               <Text style={styles.emptyBtnText}>اختر مستشاراً</Text>
             </TouchableOpacity>
+            )}
           </View>
         }
       />
+      )}
     </View>
   );
 }
@@ -315,6 +326,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  avatarImage: { width: 36, height: 36, borderRadius: 18 },
   avatarText: {
     color: "#fff",
     fontSize: 14,

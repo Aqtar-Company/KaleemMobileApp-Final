@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Platform,
   RefreshControl,
   StyleSheet,
@@ -32,9 +33,13 @@ function ConsultantCard({ consultant }: { consultant: Consultant }) {
     >
       <View style={styles.cardRow}>
         <View style={styles.cardRight}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>{consultant.name.charAt(0)}</Text>
-          </View>
+          {consultant.avatar ? (
+            <Image source={{ uri: consultant.avatar }} style={styles.avatarImage} />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+              <Text style={styles.avatarText}>{consultant.name.charAt(0)}</Text>
+            </View>
+          )}
           <TouchableOpacity
             style={[styles.favBtn, { backgroundColor: fav ? "#fee2e2" : colors.surfaceAlt }]}
             onPress={() => {
@@ -298,6 +303,7 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: "row", gap: 12, marginBottom: 12 },
   cardRight: { gap: 6, alignItems: "center" },
   avatar: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },
+  avatarImage: { width: 52, height: 52, borderRadius: 26 },
   avatarText: { color: "#fff", fontSize: 20, fontWeight: "700", fontFamily: "Inter_700Bold" },
   favBtn: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   cardInfo: { flex: 1, alignItems: "flex-end" },

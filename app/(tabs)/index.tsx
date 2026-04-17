@@ -58,9 +58,10 @@ export default function ChatScreen() {
     return (
       <View style={[styles.bubbleContainer, isUser ? styles.userContainer : styles.assistantContainer]}>
         {!isUser && (
-          <View style={[styles.avatarSmall, { backgroundColor: colors.primary }]}>
-            <Ionicons name="sparkles" size={12} color="#fff" />
-          </View>
+          <Image
+            source={require("@/assets/images/logo_square.jpg")}
+            style={styles.avatarLogo}
+          />
         )}
         <View
           style={[
@@ -159,23 +160,25 @@ export default function ChatScreen() {
           },
         ]}
       >
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, borderRadius: colors.radius }]}
-          value={input}
-          onChangeText={setInput}
-          placeholder="اكتب رسالتك..."
-          placeholderTextColor={colors.mutedForeground}
-          multiline
-          maxLength={500}
-          textAlign="right"
-          onSubmitEditing={handleSend}
-        />
+        <View style={[styles.inputWrap, { backgroundColor: colors.background, borderColor: colors.primary + "40", borderRadius: 24 }]}>
+          <TextInput
+            style={[styles.input, { color: colors.foreground }]}
+            value={input}
+            onChangeText={setInput}
+            placeholder="اكتب رسالتك إلى كليم AI..."
+            placeholderTextColor={colors.mutedForeground}
+            multiline
+            maxLength={500}
+            textAlign="right"
+            onSubmitEditing={handleSend}
+          />
+        </View>
         <TouchableOpacity
-          style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.muted }]}
+          style={[styles.sendBtn, { backgroundColor: input.trim() && !isTyping ? colors.primary : colors.muted }]}
           onPress={handleSend}
           disabled={!input.trim() || isTyping}
         >
-          <Feather name="send" size={18} color={input.trim() ? "#fff" : colors.mutedForeground} style={{ transform: [{ scaleX: -1 }] }} />
+          <Feather name="send" size={18} color={input.trim() && !isTyping ? "#fff" : colors.mutedForeground} style={{ transform: [{ scaleX: -1 }] }} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -232,6 +235,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
+  avatarLogo: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    flexShrink: 0,
+  },
   bubble: { maxWidth: "75%", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
   userBubble: { borderBottomLeftRadius: 4 },
   assistantBubble: { borderWidth: 1, borderBottomRightRadius: 4 },
@@ -251,15 +260,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     gap: 8,
   },
-  input: {
+  inputWrap: {
     flex: 1,
     borderWidth: 1.5,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    minHeight: 44,
+    justifyContent: "center",
+  },
+  input: {
     fontSize: 15,
     fontFamily: "Inter_400Regular",
     maxHeight: 100,
     textAlign: "right",
+    paddingVertical: 6,
   },
   sendBtn: {
     width: 44,
