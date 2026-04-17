@@ -17,6 +17,24 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
+// Silence the harmless "Unable to activate keep awake" rejection that
+// expo-router emits during dev when the native keep-awake module races
+// its own registration. The actual functionality is unaffected.
+const origUnhandled = (global as unknown as {
+  HermesInternal?: { enablePromiseRejectionTracker?: (opts: unknown) => void };
+}).HermesInternal?.enablePromiseRejectionTracker;
+if (origUnhandled) {
+  origUnhandled({
+    allRejections: true,
+    onUnhandled: (_id: number, err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unable to activate keep awake")) return;
+      // eslint-disable-next-line no-console
+      console.warn("Unhandled promise rejection:", msg);
+    },
+  });
+}
+
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/context/AuthContext";
 import { ChatProvider } from "@/context/ChatContext";
