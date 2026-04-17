@@ -45,7 +45,9 @@ export async function getNotificationsApi(): Promise<Notification[]> {
   return list.map(mapNotification);
 }
 
-export async function markAsReadApi(id: string | number): Promise<void> {
-  const res = await apiPost<void>("/notifications/mark-as-read", { id });
+export async function markAsReadApi(ids: Array<string | number>): Promise<void> {
+  const res = await apiPost<void>("/notifications/mark-as-read", {
+    ids: ids.map((i) => Number(i)),
+  });
   if (!res.status) throw new Error(res.message);
 }

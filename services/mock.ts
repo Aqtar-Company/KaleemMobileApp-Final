@@ -502,6 +502,9 @@ export async function mockDispatch(
     return delay(ok(saved));
   }
   if (method === "POST" && path === "/chat/typing") return delay(ok(null));
+  if (method === "POST" && /^\/chat\/service-offer\/\d+\/(accept|reject)$/.test(path)) {
+    return delay(ok(null));
+  }
 
   /* ---------- Wallet ---------- */
   if (method === "GET" && path === "/wallet") {

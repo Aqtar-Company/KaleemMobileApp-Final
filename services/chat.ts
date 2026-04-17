@@ -127,3 +127,13 @@ export async function sendTypingApi(receiver_id: string | number): Promise<void>
   const res = await apiPost<void>("/chat/typing", { receiver_id });
   if (!res.status) throw new Error(res.message);
 }
+
+export async function acceptServiceOfferApi(offerId: string | number): Promise<void> {
+  const res = await apiPost<void>(`/chat/service-offer/${offerId}/accept`, {});
+  if (!res.status) throw new Error(res.message);
+}
+
+export async function rejectServiceOfferApi(offerId: string | number): Promise<void> {
+  const res = await apiPost<void>(`/chat/service-offer/${offerId}/reject`, {});
+  if (!res.status) throw new Error(res.message);
+}

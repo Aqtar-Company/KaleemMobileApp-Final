@@ -88,6 +88,16 @@ export async function verifyPaypalDepositApi(order_id: string): Promise<Transact
   return mapTransaction(res.data);
 }
 
+export async function verifyPaymentApi(payload: {
+  payment_id?: string;
+  reference?: string;
+  provider?: string;
+}): Promise<Transaction> {
+  const res = await apiPost<ApiTransaction>("/wallet/verify-payment", payload);
+  if (!res.status || !res.data) throw new Error(res.message);
+  return mapTransaction(res.data);
+}
+
 export async function withdrawApi(amount: number): Promise<Transaction> {
   const res = await apiPost<ApiTransaction>("/wallet/withdraw", { amount });
   if (!res.status || !res.data) throw new Error(res.message);
