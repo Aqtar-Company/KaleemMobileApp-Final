@@ -40,17 +40,17 @@
     },
     "extra": {
       "apiBaseUrl": "https://api.kaleemai.com",
+      "router": {},
       "eas": {
-        "projectId": "00000000-0000-0000-0000-000000000000"
+        "projectId": "39e8033b-c842-4e00-8ae3-f8087b85aca2"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
+    "owner": "ibrahim-hassan",
     "updates": {
-      "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000",
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0
+      "url": "https://u.expo.dev/39e8033b-c842-4e00-8ae3-f8087b85aca2"
     }
   }
 }
