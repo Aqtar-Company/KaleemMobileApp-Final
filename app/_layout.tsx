@@ -12,7 +12,6 @@ import React, { useEffect } from "react";
 import { I18nManager } from "react-native";
 import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 I18nManager.allowRTL(true);
@@ -77,21 +76,19 @@ export default function RootLayout() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView style={{ flex: 1, direction: "rtl" }}>
-            <KeyboardProvider>
-              <AuthProvider>
-                <NotificationsProvider>
-                  <FavoritesProvider>
-                    <MoodProvider>
-                      <JournalProvider>
-                        <ChatProvider>
-                          <RootLayoutNav />
-                        </ChatProvider>
-                      </JournalProvider>
-                    </MoodProvider>
-                  </FavoritesProvider>
-                </NotificationsProvider>
-              </AuthProvider>
-            </KeyboardProvider>
+            <AuthProvider>
+              <NotificationsProvider>
+                <FavoritesProvider>
+                  <MoodProvider>
+                    <JournalProvider>
+                      <ChatProvider>
+                        <RootLayoutNav />
+                      </ChatProvider>
+                    </JournalProvider>
+                  </MoodProvider>
+                </FavoritesProvider>
+              </NotificationsProvider>
+            </AuthProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>
       </ErrorBoundary>
