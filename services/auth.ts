@@ -50,6 +50,30 @@ export async function logoutApi(): Promise<void> {
   } catch {}
 }
 
+export async function forgotPasswordApi(email: string): Promise<void> {
+  const res = await apiPost<void>("/password/forgot", { email }, false);
+  if (!res.status) throw new Error(res.message);
+}
+
+export async function resetPasswordApi(input: {
+  token: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}): Promise<void> {
+  const res = await apiPost<void>("/password/reset", input, false);
+  if (!res.status) throw new Error(res.message);
+}
+
+export async function changePasswordApi(input: {
+  current_password: string;
+  password: string;
+  password_confirmation: string;
+}): Promise<void> {
+  const res = await apiPost<void>("/change-password", input);
+  if (!res.status) throw new Error(res.message);
+}
+
 export function mapApiUser(apiUser: ApiUser) {
   return {
     id: String(apiUser.id),

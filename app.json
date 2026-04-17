@@ -48,7 +48,7 @@
     },
     "extra": {
       "apiBaseUrl": "https://api.kaleemai.com/api",
-      "useMock": false,
+      "useMock": true,
       "router": {},
       "eas": {
         "projectId": "39e8033b-c842-4e00-8ae3-f8087b85aca2"

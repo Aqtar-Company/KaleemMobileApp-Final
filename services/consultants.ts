@@ -52,6 +52,7 @@ export interface ConsultantsParams {
   page?: number;
   name?: string;
   service_id?: number;
+  consultation_type_id?: number;
   specialization?: string;
 }
 
@@ -60,6 +61,8 @@ export async function getConsultantsApi(params?: ConsultantsParams): Promise<Con
   if (params?.page) query.set("page", String(params.page));
   if (params?.name) query.set("name", params.name);
   if (params?.service_id) query.set("service_id", String(params.service_id));
+  if (params?.consultation_type_id)
+    query.set("consultation_type_id", String(params.consultation_type_id));
   if (params?.specialization) query.set("specialization", params.specialization);
   const qs = query.toString() ? `?${query}` : "";
   const res = await apiGet<ApiConsultant[] | { data: ApiConsultant[] }>(`/employees${qs}`);

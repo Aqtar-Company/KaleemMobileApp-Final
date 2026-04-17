@@ -1,4 +1,4 @@
-import { apiGet, apiPost, imageUrl } from "./api";
+import { apiDelete, apiGet, apiPost, imageUrl } from "./api";
 
 export interface CreateReservationParams {
   employee_id: number;
@@ -70,4 +70,9 @@ export async function getJoinTokenApi(
   );
   if (!res.status || !res.data) throw new Error(res.message);
   return res.data;
+}
+
+export async function cancelReservationApi(reservationId: string): Promise<void> {
+  const res = await apiDelete<void>(`/reservations/${reservationId}`);
+  if (!res.status) throw new Error(res.message);
 }
