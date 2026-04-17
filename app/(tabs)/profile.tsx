@@ -21,6 +21,7 @@ import { useJournal } from "@/context/JournalContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useColors } from "@/hooks/useColors";
 import { Card, Divider } from "@/components/UI";
+import { MoodIcon } from "@/components/MoodIcon";
 
 function MenuItem({
   icon,
@@ -67,8 +68,6 @@ export default function ProfileScreen() {
   const { favorites } = useFavorites();
   const colorScheme = useColorScheme();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-
-  const MOOD_EMOJIS = ["😢", "😟", "😐", "🙂", "😊"];
 
   const handleLogout = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -139,12 +138,16 @@ export default function ProfileScreen() {
               style={[styles.wellnessItem, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}
               onPress={() => router.push("/mood")}
             >
-              <Text style={styles.wellnessEmoji}>
-                {todayEntry ? MOOD_EMOJIS[todayEntry.mood - 1] : "🌱"}
-              </Text>
+              <View style={styles.wellnessIcon}>
+                {todayEntry ? (
+                  <MoodIcon level={todayEntry.mood} size={26} />
+                ) : (
+                  <Feather name="heart" size={22} color={colors.primary} />
+                )}
+              </View>
               <Text style={[styles.wellnessLabel, { color: colors.foreground }]}>متتبع المزاج</Text>
               <Text style={[styles.wellnessSub, { color: colors.primary }]}>
-                {todayEntry ? "مسجّل ✓" : "سجّل اليوم"}
+                {todayEntry ? "مسجّل" : "سجّل اليوم"}
               </Text>
             </TouchableOpacity>
 
@@ -152,7 +155,9 @@ export default function ProfileScreen() {
               style={[styles.wellnessItem, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}
               onPress={() => router.push("/journal")}
             >
-              <Text style={styles.wellnessEmoji}>📓</Text>
+              <View style={styles.wellnessIcon}>
+                <Feather name="book-open" size={22} color={colors.primary} />
+              </View>
               <Text style={[styles.wellnessLabel, { color: colors.foreground }]}>اليوميات</Text>
               <Text style={[styles.wellnessSub, { color: colors.primary }]}>
                 {journalEntries.length} مذكرة
@@ -163,7 +168,9 @@ export default function ProfileScreen() {
               style={[styles.wellnessItem, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}
               onPress={() => router.push("/schedule")}
             >
-              <Text style={styles.wellnessEmoji}>📅</Text>
+              <View style={styles.wellnessIcon}>
+                <Feather name="calendar" size={22} color={colors.primary} />
+              </View>
               <Text style={[styles.wellnessLabel, { color: colors.foreground }]}>الجدول</Text>
               <Text style={[styles.wellnessSub, { color: colors.primary }]}>مواعيدك</Text>
             </TouchableOpacity>
@@ -283,7 +290,14 @@ const styles = StyleSheet.create({
   wellnessCard: { padding: 0, overflow: "hidden" },
   wellnessRow: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingBottom: 14 },
   wellnessItem: { flex: 1, padding: 12, alignItems: "center", gap: 4 },
-  wellnessEmoji: { fontSize: 26 },
+  wellnessIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
   wellnessLabel: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold", textAlign: "center" },
   wellnessSub: { fontSize: 10, fontFamily: "Inter_400Regular", textAlign: "center" },
   section: { padding: 0, overflow: "hidden" },

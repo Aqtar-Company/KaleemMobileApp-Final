@@ -20,8 +20,7 @@ import { useColors } from "@/hooks/useColors";
 import { Card, SectionTitle, Badge } from "@/components/UI";
 import { SERVICES, type Service } from "@/data/mockData";
 import { useConsultants } from "@/hooks/useConsultants";
-
-const MOOD_EMOJIS = ["😢", "😟", "😐", "🙂", "😊"];
+import { MoodIcon } from "@/components/MoodIcon";
 
 function ServiceCard({ service, onPress }: { service: Service; onPress: () => void }) {
   const colors = useColors();
@@ -75,6 +74,10 @@ export default function HomeScreen() {
           style={[styles.headerGradient, { paddingTop: topPadding + 16 }]}
         >
           <View style={styles.headerTop}>
+            <View>
+              <Text style={styles.greeting}>أهلاً،</Text>
+              <Text style={styles.userName}>{user?.name || "ضيف"}</Text>
+            </View>
             <View style={styles.headerActions}>
               <TouchableOpacity
                 style={styles.notifBtn}
@@ -94,14 +97,14 @@ export default function HomeScreen() {
                 <Ionicons name="calendar" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
-            <View>
-              <Text style={styles.greeting}>أهلاً،</Text>
-              <Text style={styles.userName}>{user?.name || "ضيف"}</Text>
-            </View>
           </View>
 
           <View style={[styles.walletCard, { backgroundColor: "rgba(255,255,255,0.15)", borderRadius: colors.radius }]}>
             <View style={styles.walletRow}>
+              <View>
+                <Text style={styles.walletLabel}>رصيد محفظتك</Text>
+                <Text style={styles.walletBalance}>${user?.walletBalance || 0}</Text>
+              </View>
               <TouchableOpacity
                 style={[styles.chargeBtn, { backgroundColor: "#d4a853" }]}
                 onPress={() => router.push("/(tabs)/wallet")}
@@ -109,10 +112,6 @@ export default function HomeScreen() {
                 <Feather name="plus" size={14} color="#fff" />
                 <Text style={styles.chargeBtnText}>شحن</Text>
               </TouchableOpacity>
-              <View>
-                <Text style={styles.walletLabel}>رصيد محفظتك</Text>
-                <Text style={styles.walletBalance}>${user?.walletBalance || 0}</Text>
-              </View>
             </View>
             <View style={[styles.divider, { backgroundColor: "rgba(255,255,255,0.2)" }]} />
             <View style={styles.aiRow}>
@@ -129,14 +128,18 @@ export default function HomeScreen() {
               onPress={() => router.push("/mood")}
               activeOpacity={0.8}
             >
-              <Text style={styles.quickEmoji}>
-                {todayEntry ? MOOD_EMOJIS[todayEntry.mood - 1] : "🌱"}
-              </Text>
+              <View style={styles.quickIcon}>
+                {todayEntry ? (
+                  <MoodIcon level={todayEntry.mood} size={28} />
+                ) : (
+                  <Feather name="heart" size={24} color={colors.primary} />
+                )}
+              </View>
               <Text style={[styles.quickTitle, { color: colors.foreground }]}>
                 {todayEntry ? "مزاج اليوم" : "سجّل مزاجك"}
               </Text>
               <Text style={[styles.quickSub, { color: colors.mutedForeground }]}>
-                {todayEntry ? "تم التسجيل ✓" : "لم تسجل بعد"}
+                {todayEntry ? "تم التسجيل" : "لم تسجل بعد"}
               </Text>
             </TouchableOpacity>
 
@@ -145,7 +148,9 @@ export default function HomeScreen() {
               onPress={() => router.push("/journal")}
               activeOpacity={0.8}
             >
-              <Text style={styles.quickEmoji}>📓</Text>
+              <View style={styles.quickIcon}>
+                <Feather name="book-open" size={24} color={colors.primary} />
+              </View>
               <Text style={[styles.quickTitle, { color: colors.foreground }]}>اليوميات</Text>
               <Text style={[styles.quickSub, { color: colors.mutedForeground }]}>سجّل أفكارك</Text>
             </TouchableOpacity>
@@ -155,7 +160,9 @@ export default function HomeScreen() {
               onPress={() => router.push("/schedule")}
               activeOpacity={0.8}
             >
-              <Text style={styles.quickEmoji}>📅</Text>
+              <View style={styles.quickIcon}>
+                <Feather name="calendar" size={24} color={colors.primary} />
+              </View>
               <Text style={[styles.quickTitle, { color: colors.foreground }]}>الجدول</Text>
               <Text style={[styles.quickSub, { color: colors.mutedForeground }]}>مواعيدك</Text>
             </TouchableOpacity>
@@ -293,7 +300,14 @@ const styles = StyleSheet.create({
   content: { padding: 20 },
   quickRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
   quickCard: { flex: 1, padding: 12, borderWidth: 1, alignItems: "center", gap: 4 },
-  quickEmoji: { fontSize: 26, marginBottom: 2 },
+  quickIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
   quickTitle: { fontSize: 12, fontWeight: "700", fontFamily: "Inter_700Bold", textAlign: "center" },
   quickSub: { fontSize: 10, fontFamily: "Inter_400Regular", textAlign: "center" },
   aiPrompt: {
@@ -367,7 +381,7 @@ const styles = StyleSheet.create({
   emergencyFab: {
     position: "absolute",
     bottom: 90,
-    left: 20,
+    right: 20,
     backgroundColor: "#e53e3e",
     flexDirection: "row",
     alignItems: "center",

@@ -151,8 +151,8 @@ export default function ConsultantsScreen() {
       <View style={[styles.filters, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <FlatList
           data={[
-            { id: "favorites", label: "❤️ المفضلون" },
-            { id: "all", label: "الكل" },
+            { id: "favorites", label: "المفضلون", icon: "heart" as const },
+            { id: "all", label: "الكل", icon: null },
           ]}
           keyExtractor={(item) => item.id}
           horizontal
@@ -181,20 +181,35 @@ export default function ConsultantsScreen() {
                   else setFavOnly(false);
                 }}
               >
-                <Text
-                  style={[
-                    styles.filterText,
-                    {
-                      color: isActive
-                        ? item.id === "favorites"
-                          ? "#e53e3e"
-                          : "#fff"
-                        : colors.primary,
-                    },
-                  ]}
-                >
-                  {item.label}
-                </Text>
+                <View style={styles.filterContent}>
+                  {item.icon ? (
+                    <Feather
+                      name={item.icon}
+                      size={14}
+                      color={
+                        isActive
+                          ? item.id === "favorites"
+                            ? "#e53e3e"
+                            : "#fff"
+                          : colors.primary
+                      }
+                    />
+                  ) : null}
+                  <Text
+                    style={[
+                      styles.filterText,
+                      {
+                        color: isActive
+                          ? item.id === "favorites"
+                            ? "#e53e3e"
+                            : "#fff"
+                          : colors.primary,
+                      },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           }}
@@ -277,6 +292,7 @@ const styles = StyleSheet.create({
   searchText: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "right" },
   filters: { paddingVertical: 12, borderBottomWidth: 1 },
   filterChip: { paddingVertical: 7, paddingHorizontal: 16 },
+  filterContent: { flexDirection: "row", alignItems: "center", gap: 6 },
   filterText: { fontSize: 13, fontFamily: "Inter_500Medium" },
   card: { padding: 14 },
   cardRow: { flexDirection: "row", gap: 12, marginBottom: 12 },

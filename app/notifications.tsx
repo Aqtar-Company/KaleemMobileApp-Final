@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   notifContent: { flex: 1, alignItems: "flex-start" },
   notifTitle: { fontSize: 14, fontWeight: "600", fontFamily: "Inter_600SemiBold", marginBottom: 3, textAlign: "right" },
   notifBody: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "right", lineHeight: 18 },
-  notifTime: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "left" },
+  notifTime: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "right" },
   empty: { alignItems: "center", paddingVertical: 80, gap: 16 },
   emptyText: { fontSize: 16, fontFamily: "Inter_400Regular" },
 });

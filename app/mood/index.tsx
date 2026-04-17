@@ -15,13 +15,20 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useMood, MoodLevel, MoodEntry } from "@/context/MoodContext";
+import { MoodIcon, getMoodIconName } from "@/components/MoodIcon";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-const MOODS: { level: MoodLevel; emoji: string; label: string; color: string }[] = [
-  { level: 1, emoji: "😢", label: "سيء جداً", color: "#e53e3e" },
-  { level: 2, emoji: "😟", label: "سيء", color: "#f6ad55" },
-  { level: 3, emoji: "😐", label: "مقبول", color: "#d4a853" },
-  { level: 4, emoji: "🙂", label: "جيد", color: "#68d391" },
-  { level: 5, emoji: "😊", label: "ممتاز", color: "#007A68" },
+const MOODS: {
+  level: MoodLevel;
+  iconName: keyof typeof MaterialCommunityIcons.glyphMap;
+  label: string;
+  color: string;
+}[] = [
+  { level: 1, iconName: getMoodIconName(1), label: "سيء جداً", color: "#e53e3e" },
+  { level: 2, iconName: getMoodIconName(2), label: "سيء", color: "#f6ad55" },
+  { level: 3, iconName: getMoodIconName(3), label: "مقبول", color: "#d4a853" },
+  { level: 4, iconName: getMoodIconName(4), label: "جيد", color: "#68d391" },
+  { level: 5, iconName: getMoodIconName(5), label: "ممتاز", color: "#007A68" },
 ];
 
 const WEEK_DAYS_AR = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
@@ -33,7 +40,7 @@ function MoodBar({ entry }: { entry: MoodEntry }) {
   const dayName = WEEK_DAYS_AR[d.getDay()];
   return (
     <View style={styles.barItem}>
-      <Text style={[styles.barEmoji]}>{mood.emoji}</Text>
+      <MoodIcon level={mood.level} size={18} color={mood.color} />
       <View style={styles.barWrapper}>
         <View
           style={[
@@ -89,7 +96,7 @@ export default function MoodScreen() {
         {/* Today */}
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
           <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-            {saved ? "مزاج اليوم ✓" : "كيف حالك اليوم؟"}
+            {saved ? "مزاج اليوم" : "كيف حالك اليوم؟"}
           </Text>
           <View style={styles.moodsRow}>
             {MOODS.map((m) => (
@@ -106,7 +113,11 @@ export default function MoodScreen() {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
               >
-                <Text style={styles.moodEmoji}>{m.emoji}</Text>
+                <MaterialCommunityIcons
+                  name={m.iconName}
+                  size={32}
+                  color={selectedMood === m.level ? m.color : colors.mutedForeground}
+                />
                 <Text style={[styles.moodLabel, { color: selectedMood === m.level ? m.color : colors.mutedForeground }]}>
                   {m.label}
                 </Text>
@@ -180,7 +191,7 @@ export default function MoodScreen() {
                     ) : null}
                   </View>
                   <View style={[styles.historyMood, { backgroundColor: mood.color + "18" }]}>
-                    <Text style={styles.historyEmoji}>{mood.emoji}</Text>
+                    <MaterialCommunityIcons name={mood.iconName} size={22} color={mood.color} />
                     <Text style={[styles.historyMoodLabel, { color: mood.color }]}>{mood.label}</Text>
                   </View>
                 </View>

@@ -54,7 +54,7 @@ export function Button({ title, onPress, variant = "primary", loading, disabled,
         <ActivityIndicator color={textColor} size="small" />
       ) : (
         <View style={styles.buttonContent}>
-          {icon && <Feather name={icon} size={16} color={textColor} style={{ marginRight: 6 }} />}
+          {icon && <Feather name={icon} size={16} color={textColor} style={{ marginEnd: 6 }} />}
           <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
         </View>
       )}
@@ -146,7 +146,7 @@ export function TextInputField({ label, value, onChangeText, placeholder, secure
     <View style={styles.inputWrapper}>
       <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>{label}</Text>
       <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-        {icon && <Feather name={icon} size={18} color={colors.mutedForeground} style={{ marginLeft: 14 }} />}
+        {icon && <Feather name={icon} size={18} color={colors.mutedForeground} style={{ marginStart: 14 }} />}
         <TextInput
           style={[styles.input, { color: colors.foreground }]}
           value={value}
