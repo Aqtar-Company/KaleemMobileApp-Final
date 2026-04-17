@@ -1,26 +1,44 @@
-import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Redirect } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useAuth } from '@/lib/auth';
+import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Index() {
-  const { user, loading } = useAuth();
-  const scheme = useColorScheme() ?? 'light';
+  const { user, isLoading } = useAuth();
+  const colors = useColors();
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
-  if (loading) {
+  useEffect(() => {
+    AsyncStorage.getItem("kaleem_onboarded").then((v) => {
+      setOnboarded(v === "true");
+    });
+  }, []);
+
+  if (isLoading || onboarded === null) {
     return (
       <View
         style={{
           flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: Colors[scheme].background,
-        }}>
-        <ActivityIndicator color={Colors[scheme].tint} />
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
-  return <Redirect href={user ? '/(tabs)' : '/(auth)/login'} />;
+
+  if (!onboarded) {
+    return <Redirect href="/onboarding" />;
+  }
+
+  if (user) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return <Redirect href="/auth/login" />;
 }

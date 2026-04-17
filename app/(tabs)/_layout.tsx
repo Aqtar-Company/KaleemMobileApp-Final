@@ -1,67 +1,104 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Redirect, Tabs } from 'expo-router';
+import { BlurView } from "expo-blur";
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-import { useAuth } from '@/lib/auth';
-
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
-}
+import { useColors } from "@/hooks/useColors";
 
 export default function TabLayout() {
-  const scheme = useColorScheme();
-  const { user, loading } = useAuth();
-
-  if (loading) return null;
-  if (!user) return <Redirect href="/(auth)/login" />;
-
-  const c = Colors[scheme ?? 'light'];
+  const colors = useColors();
+  const colorScheme = useColorScheme();
+  const safeAreaInsets = useSafeAreaInsets();
+  const isDark = colorScheme === "dark";
+  const isIOS = Platform.OS === "ios";
+  const isWeb = Platform.OS === "web";
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: c.tint,
-        tabBarInactiveTintColor: c.tabIconDefault,
-        headerShown: useClientOnlyValue(false, true),
-        headerStyle: { backgroundColor: c.background },
-        headerTitleStyle: { color: c.text },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.mutedForeground,
+        headerShown: false,
         tabBarStyle: {
-          backgroundColor: c.background,
-          borderTopColor: c.border,
+          position: "absolute",
+          backgroundColor: isIOS ? "transparent" : colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          elevation: 0,
+          paddingBottom: safeAreaInsets.bottom,
+          ...(isWeb ? { height: 84 } : {}),
         },
-      }}>
+        tabBarBackground: () =>
+          isIOS ? (
+            <BlurView
+              intensity={100}
+              tint={isDark ? "dark" : "light"}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : isWeb ? (
+            <View
+              style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}
+            />
+          ) : null,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontFamily: "Inter_500Medium",
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          title: "كليم AI",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
+              size={23}
+              color={color}
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="consultants"
+        name="home"
         options={{
-          title: 'Consultants',
-          tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+          title: "الرئيسية",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={23} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="chats"
+        name="sessions"
         options={{
-          title: 'Chats',
-          tabBarIcon: ({ color }) => <TabBarIcon name="comments" color={color} />,
+          title: "جلساتي",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "calendar" : "calendar-outline"}
+              size={23}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          title: "المحفظة",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "wallet" : "wallet-outline"} size={23} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+          title: "حسابي",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "person" : "person-outline"} size={23} color={color} />
+          ),
         }}
       />
     </Tabs>
