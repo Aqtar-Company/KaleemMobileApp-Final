@@ -1,5 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { getNotificationsApi, markAsReadApi, type Notification } from "@/services/notifications";
+import {
+  getNotificationsApi,
+  markAllAsReadApi,
+  markAsReadApi,
+  type Notification,
+} from "@/services/notifications";
 import { useAuth } from "@/context/AuthContext";
 
 export type AppNotification = Notification;
@@ -54,18 +59,18 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const markAsRead = useCallback(async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     try {
-      await markAsReadApi([id]);
+      await markAsReadApi(id);
     } catch {
       // Keep local optimistic state; background sync will self-correct next refetch.
     }
   }, []);
 
   const markAllAsRead = useCallback(async () => {
-    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
-    if (unreadIds.length === 0) return;
+    const hasUnread = notifications.some((n) => !n.read);
+    if (!hasUnread) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     try {
-      await markAsReadApi(unreadIds);
+      await markAllAsReadApi();
     } catch {
       // Optimistic; next refetch will reconcile with server.
     }
