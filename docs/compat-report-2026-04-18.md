@@ -7,7 +7,7 @@
 ## الريبوهات
 
 | النوع | الريبو | الفرع الرئيسي | فرع العمل |
-|-----|------|--------------|-----------|
+|-----|------|--------------|----------|
 | Backend (Laravel) | `Aqtar-Company/rafiq_backend` | `main` | `claude/improve-mobile-app-nJrpj` |
 | Frontend (React) | `Aqtar-Company/kaleem-wellbeing-hub` | `main` | `claude/improve-mobile-app-nJrpj` |
 | Mobile (Expo)    | `Aqtar-Company/kaleemmobileapp-final` | `main` | `claude/improve-mobile-app-nJrpj` |
@@ -159,7 +159,7 @@
 #### 🔌 خدمات وشاشات جديدة
 
 | Commit | الـ Path | الوصف |
-|--------|--------|--------|
+|--------|--------|-------|
 | `c8bc91c` | `context/NotificationsContext.tsx` | أعيد كتابته — يجيب الإشعارات من `getNotificationsApi`، optimistic updates، يحذف 5 إشعارات hardcoded |
 | `c8bc91c` | `app/auth/forgot-password.tsx` | شاشة جديدة تستدعي `forgotPasswordApi` |
 | `c8bc91c` | `app/auth/login.tsx` | ربط زر "نسيت كلمة المرور؟" (كان بلا handler) |
@@ -181,14 +181,14 @@
 #### 🔔 Notifications
 
 | Commit | الـ Path | الوصف |
-|--------|--------|--------|
+|--------|--------|-------|
 | `09757e1` | `src/pages/NotificationsPage.tsx` | استدعاء `/mark-all-as-read` كان يرد 404 لأن الباكند ما فيهوش. تم التحويل إلى `POST /notifications/mark-as-read` (نفس الـ endpoint اللي يصنّف الكل كمقروء لما الـ body فاضي — مطابق لسلوك الموبايل `markAllAsReadApi`). |
 | `09757e1` | `src/data/notificationsData.ts` | `dummyNotifications` أُفرغت — كانت 5 كائنات hardcoded تظهر للمستخدم لو الـ API فشل. الآن الـ hook يرجّع مصفوفة فاضية والـ UI يعرض empty state بشكل صحيح. |
 
 #### 💳 Wallet bundles — مصدر موحّد
 
 | Commit | الـ Path | الوصف |
-|--------|--------|--------|
+|--------|--------|-------|
 | `11af39c` | `src/hooks/useWalletBundles.ts` (جديد) | Hook جديد على React Query: يجيب الباقات من `GET /session-packs?pack_type=wallet_bundle` ويحوّلها لشكل `WalletBundle` بنفس أسماء الحقول اللي الـ UI يستعملها (`writtenFree`, `aiMessages`, `aiLabel`, `extendedChat`, `popular`, `badge`). الـ color rotation (`emerald` → `blue` → `purple`) يُسند client-side حسب ترتيب الباقات. `staleTime: 5min`. |
 | `9057782` | `src/components/dialogues/DepositModal.tsx` | استبدال `CREDIT_PACKS` المحلية بـ `useWalletBundles`. تم حذف ≈60 سطر ثابتة. أُضيف loading state (`Loader2` مع نص "جارٍ تحميل الباقات…") وحالة empty ("لا توجد باقات متاحة الآن"). الـ `pack_id` المرسل لـ `/wallet/paypal/create-order` الآن يستخدم `pack.dbId` (الـ row id الحقيقي) بدل الـ slug. |
 | `c65b942` | `src/components/sections/PricingSection.tsx` | نفس refactor الـ DepositModal مُطبّق على الصفحة الرئيسية. `CreditPack` type بقى alias لـ `WalletBundle`. الـ animations، الـ ConfirmModal، الـ HowItWorksStrip، والـ cardVariants ما اتغيرواش. أُضيف loading + empty state بنفس النمط. الميزات الاختيارية (`writtenFree > 0`, `aiMessages > 0`, `extendedChat`) الآن تُخفى بشكل مشروط بدل ما تُعرض بأصفار. |
@@ -199,4 +199,17 @@
 
 إجمالي التغيير: **3 ملفات معدّلة + 1 hook جديد = ≈150 سطر مضاف، ≈180 سطر محذوف**.
 
-> الأقسام 3-4 تُكمل في تاسكات لاحقة.
+---
+
+## 3. Missing ❌
+
+### 3.a Backend (`rafiq_backend`)
+
+| الـ endpoint | الحالة | التفاصيل |
+|--------------|--------|----------|
+| `GET /reservations/{id}/report` | ❌ غير موجود | الموبايل في `sessions/report/[id].tsx` يعرض placeholder "التقرير قيد التجهيز". الموجود فقط `GET /reports/{report}/download` في نطاق المستشار — غير متاح للمستخدم العادي. |
+| `DELETE /user` أو `/user/delete` | ❌ غير موجود | الموبايل عنده زر "حذف الحساب" في `profile.tsx` بدون endpoint في الباكند. |
+| Notification preferences endpoint | ❌ غير موجود | `NotificationsTab.tsx` في الفرونت يحفظ إعدادات التنبيهات (البريد/الرسائل/App) في state محلي فقط — لا يوجد `POST /notifications/preferences` في الباكند. |
+| Session packs consultant tiers | ❌ hardcoded في الاثنين | تفاصيل الباقات (4/6/10 جلسات، discounts %) مُشفّرة مباشرة في `SessionPackController::purchaseConsultantPack` وفي `SessionPacksSection.tsx` — لا endpoint لجلبها ديناميكياً. |
+
+> الأقسام 3.b–4 تُكمل في تاسكات لاحقة.
