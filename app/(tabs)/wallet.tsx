@@ -1,8 +1,8 @@
-import { Feather } from "@expo/vector-icons";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,76 +18,132 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import { useColors } from "@/hooks/useColors";
+import { useCurrency } from "@/hooks/useCurrency";
 import { Card, SectionTitle } from "@/components/UI";
-import { WALLET_PACKAGES, type WalletPackage } from "@/data/mockData";
+import {
+  SessionPack,
+  getSessionPacksApi,
+  purchasePackApi,
+} from "@/services/sessionPacks";
 import type { Transaction } from "@/services/wallet";
 
-function PackageCard({ pkg, onSelect }: { pkg: WalletPackage; onSelect: () => void }) {
+function PackageCard({
+  pack,
+  priceLabel,
+  busy,
+  onSelect,
+}: {
+  pack: SessionPack;
+  priceLabel: string;
+  busy: boolean;
+  onSelect: () => void;
+}) {
   const colors = useColors();
   return (
     <Card
-      style={[styles.packageCard, pkg.popular && { borderColor: colors.primary, borderWidth: 2 }]}
+      style={[
+        styles.packageCard,
+        pack.isPopular && { borderColor: colors.primary, borderWidth: 2 },
+      ]}
       onPress={onSelect}
     >
-      {pkg.popular && (
+      {pack.isPopular && (
         <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
           <Text style={styles.popularText}>الأكثر طلباً</Text>
         </View>
       )}
       <View style={styles.packageHeader}>
-        <Text style={[styles.packagePrice, { color: colors.primary }]}>${pkg.price}</Text>
-        <Text style={[styles.packageTitle, { color: colors.foreground }]}>{pkg.title}</Text>
+        <Text style={[styles.packagePrice, { color: colors.primary }]}>{priceLabel}</Text>
+        <Text style={[styles.packageTitle, { color: colors.foreground }]}>{pack.name}</Text>
       </View>
       <Text style={[styles.walletAdded, { color: colors.mutedForeground }]}>يُضاف لمحفظتك</Text>
 
-      <View style={[styles.bonuses, { backgroundColor: colors.surfaceAlt, borderRadius: colors.radius - 4 }]}>
+      <View
+        style={[
+          styles.bonuses,
+          { backgroundColor: colors.surfaceAlt, borderRadius: colors.radius - 4 },
+        ]}
+      >
         <Text style={[styles.bonusesTitle, { color: colors.mutedForeground }]}>هدايا مجانية مع الشحن</Text>
-        <View style={styles.bonusRow}>
-          <Feather name="check-circle" size={14} color={colors.primary} />
-          <Text style={[styles.bonusText, { color: colors.foreground }]}>
-            {pkg.bonus.freeConsultations} استشارة كتابية مجانية
-          </Text>
-        </View>
-        <View style={styles.bonusRow}>
-          <Feather name="check-circle" size={14} color={colors.primary} />
-          <Text style={[styles.bonusText, { color: colors.foreground }]}>
-            كليم AI — {pkg.bonus.aiMessages} رسالة مجانية
-          </Text>
-        </View>
-        {pkg.bonus.hasFollowUp && (
-          <View style={styles.bonusRow}>
-            <Feather name="check-circle" size={14} color={colors.accent} />
-            <Text style={[styles.bonusText, { color: colors.foreground }]}>شات ممتد للمتابعة</Text>
-          </View>
+        {pack.sessionsCount > 0 && (
+          <BonusRow
+            text={`${pack.sessionsCount} جلسة ${pack.sessionType === "written" ? "مكتوبة" : "أونلاين"}`}
+            color={colors.primary}
+          />
+        )}
+        {pack.freeWrittenSessions > 0 && (
+          <BonusRow
+            text={`${pack.freeWrittenSessions} استشارة كتابية مجانية`}
+            color={colors.primary}
+          />
+        )}
+        {pack.aiMessagesCredit > 0 && (
+          <BonusRow
+            text={`كليم AI — ${pack.aiMessagesCredit} رسالة مجانية`}
+            color={colors.primary}
+          />
+        )}
+        {pack.hasExtendedChat && (
+          <BonusRow text="شات ممتد للمتابعة" color={colors.accent} />
         )}
       </View>
 
       <TouchableOpacity
+        disabled={busy}
         style={[
           styles.chargeNowBtn,
-          { backgroundColor: pkg.popular ? colors.primary : colors.secondary, borderRadius: colors.radius - 2 },
+          {
+            backgroundColor: pack.isPopular ? colors.primary : colors.secondary,
+            borderRadius: colors.radius - 2,
+          },
         ]}
         onPress={onSelect}
       >
-        <Text style={[styles.chargeNowText, { color: pkg.popular ? "#fff" : colors.primary }]}>
-          اشحن الآن
-        </Text>
+        {busy ? (
+          <ActivityIndicator color={pack.isPopular ? "#fff" : colors.primary} />
+        ) : (
+          <Text
+            style={[
+              styles.chargeNowText,
+              { color: pack.isPopular ? "#fff" : colors.primary },
+            ]}
+          >
+            اشحن الآن
+          </Text>
+        )}
       </TouchableOpacity>
     </Card>
   );
 }
 
+function BonusRow({ text, color }: { text: string; color: string }) {
+  const colors = useColors();
+  return (
+    <View style={styles.bonusRow}>
+      <Feather name="check-circle" size={14} color={color} />
+      <Text style={[styles.bonusText, { color: colors.foreground }]}>{text}</Text>
+    </View>
+  );
+}
+
 function TransactionRow({ tx }: { tx: Transaction }) {
   const colors = useColors();
+  const { format } = useCurrency();
+  const prefix = tx.type === "credit" ? "+" : "-";
   return (
     <View
       style={[
         styles.txRow,
-        { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius - 4 },
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          borderRadius: colors.radius - 4,
+        },
       ]}
     >
       <Text style={[styles.txAmount, { color: tx.type === "credit" ? "#007A68" : "#e53e3e" }]}>
-        {tx.type === "credit" ? "+" : "-"}${tx.amount}
+        {prefix}
+        {format({ price_egp: tx.amount, price_usd: tx.amount })}
       </Text>
       <View style={styles.txInfo}>
         <Text style={[styles.txLabel, { color: colors.foreground }]}>{tx.description}</Text>
@@ -113,34 +169,82 @@ export default function WalletScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user, refreshProfile } = useAuth();
-  const { wallet, loading, refetch } = useWallet(!!user);
-  const [refreshing, setRefreshing] = React.useState(false);
+  const { wallet, loading: walletLoading, refetch } = useWallet(!!user);
+  const { format } = useCurrency();
+
+  const [packs, setPacks] = useState<SessionPack[]>([]);
+  const [packsLoading, setPacksLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [busyPackId, setBusyPackId] = useState<string | null>(null);
+
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
+  const loadPacks = useCallback(async () => {
+    try {
+      const list = await getSessionPacksApi({ pack_type: "wallet_bundle" });
+      setPacks(list);
+    } catch {
+      // Silent: wallet still usable; refresh will retry.
+    } finally {
+      setPacksLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPacks();
+  }, [loadPacks]);
+
   const balance = wallet?.balance ?? user?.walletBalance ?? 0;
-  const currency = wallet?.currency ?? user?.walletCurrency ?? "USD";
+  const balanceCurrency = wallet?.currency ?? user?.walletCurrency ?? "USD";
   const sessions = wallet?.sessionsCount ?? 0;
   const aiMessages = wallet?.aiMessages ?? user?.aiMessages ?? 0;
   const transactions = wallet?.transactions ?? [];
 
+  const balanceLabel =
+    balanceCurrency === "USD"
+      ? format({ price_usd: balance })
+      : format({ price_egp: balance, price_usd: balance });
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refreshProfile()]);
+    await Promise.all([refetch(), refreshProfile(), loadPacks()]);
     setRefreshing(false);
   };
 
-  const handleCharge = (pkg: WalletPackage) => {
+  const handleCharge = (pack: SessionPack) => {
+    if (!user) {
+      Alert.alert("تسجيل الدخول", "يرجى تسجيل الدخول أولاً", [
+        { text: "إلغاء", style: "cancel" },
+        { text: "دخول", onPress: () => router.push("/auth/login") },
+      ]);
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const priceLabel = format({
+      price_egp: pack.priceEgp,
+      price_sar: pack.priceSar,
+      price_usd: pack.priceUsd,
+    });
     Alert.alert(
       "تأكيد الشحن",
-      `هل تريد شحن ${pkg.price}$ لمحفظتك؟\n\nهدايا مجانية:\n• ${pkg.bonus.freeConsultations} استشارة كتابية\n• ${pkg.bonus.aiMessages} رسالة كليم AI`,
+      `هل تريد شراء ${pack.name} بـ ${priceLabel}؟\n\nهدايا:\n• ${pack.sessionsCount} جلسة${pack.freeWrittenSessions > 0 ? ` + ${pack.freeWrittenSessions} استشارة مكتوبة` : ""}${pack.aiMessagesCredit > 0 ? `\n• ${pack.aiMessagesCredit} رسالة AI` : ""}`,
       [
         { text: "إلغاء", style: "cancel" },
         {
           text: "شحن الآن",
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert("قريباً", "سيتم تفعيل الدفع قريباً. شكراً لاهتمامك!");
+          onPress: async () => {
+            setBusyPackId(pack.id);
+            try {
+              await purchasePackApi(pack.id);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              await Promise.all([refetch(), refreshProfile()]);
+              Alert.alert("تم بنجاح", `تم شراء ${pack.name}`);
+            } catch (e) {
+              const message = e instanceof Error && e.message ? e.message : "تعذر إتمام الشراء";
+              Alert.alert("خطأ", message);
+            } finally {
+              setBusyPackId(null);
+            }
           },
         },
       ]
@@ -160,14 +264,12 @@ export default function WalletScreen() {
         colors={["#007A68", "#004D40"]}
         style={[styles.balanceCard, { paddingTop: topPadding + 20 }]}
       >
-        {loading && !refreshing ? (
+        {walletLoading && !refreshing ? (
           <ActivityIndicator color="#fff" size="large" style={{ marginVertical: 24 }} />
         ) : (
           <>
             <Text style={styles.balanceLabel}>رصيد محفظتك</Text>
-            <Text style={styles.balanceAmount}>
-              {currency === "EGP" ? "ج.م " : "$"}{balance}
-            </Text>
+            <Text style={styles.balanceAmount}>{balanceLabel}</Text>
             <Text style={styles.balanceNote}>الرصيد لا ينتهي — استخدمه في أي وقت</Text>
           </>
         )}
@@ -191,9 +293,25 @@ export default function WalletScreen() {
         <Text style={[styles.packagesNote, { color: colors.mutedForeground }]}>
           اشحن مرة واحدة واحجز مع أي مستشار تختاره
         </Text>
-        {WALLET_PACKAGES.map((pkg) => (
-          <PackageCard key={pkg.id} pkg={pkg} onSelect={() => handleCharge(pkg)} />
-        ))}
+        {packsLoading ? (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
+        ) : packs.length === 0 ? (
+          <Text style={[styles.packagesNote, { color: colors.mutedForeground }]}>لا توجد باقات متاحة حالياً</Text>
+        ) : (
+          packs.map((pack) => (
+            <PackageCard
+              key={pack.id}
+              pack={pack}
+              priceLabel={format({
+                price_egp: pack.priceEgp,
+                price_sar: pack.priceSar,
+                price_usd: pack.priceUsd,
+              })}
+              busy={busyPackId === pack.id}
+              onSelect={() => handleCharge(pack)}
+            />
+          ))
+        )}
 
         <SectionTitle title="المعاملات الأخيرة" />
         {transactions.length > 0 ? (
@@ -201,9 +319,7 @@ export default function WalletScreen() {
         ) : (
           <View style={styles.emptyTx}>
             <Feather name="clock" size={32} color={colors.border} />
-            <Text style={[styles.emptyTxText, { color: colors.mutedForeground }]}>
-              لا توجد معاملات بعد
-            </Text>
+            <Text style={[styles.emptyTxText, { color: colors.mutedForeground }]}>لا توجد معاملات بعد</Text>
           </View>
         )}
       </View>
@@ -278,7 +394,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
     marginBottom: 6,
   },
-  bonusRow: { flexDirection: "row", alignItems: "center", gap: 8, justifyContent: "flex-start" },
+  bonusRow: { flexDirection: "row", alignItems: "center", gap: 8, justifyContent: "flex-end" },
   bonusText: { fontSize: 13, fontFamily: "Inter_400Regular" },
   chargeNowBtn: { paddingVertical: 13, alignItems: "center" },
   chargeNowText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
