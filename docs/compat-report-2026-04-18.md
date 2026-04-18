@@ -16,8 +16,8 @@
 
 ## ملخص العمل على الفرع
 
-- 12 commit على ريبو الموبايل (إصلاحات api layer + شاشات جديدة + إزالة mock).
-- 1 commit على ريبو الفرونت (إصلاح mark-as-read + تفريغ dummy seeds).
+- 13 commit على ريبو الموبايل (إصلاحات api layer + شاشات جديدة + إزالة mock + التقرير).
+- 4 commits على ريبو الفرونت (إصلاح mark-as-read + تفريغ dummy seeds + `useWalletBundles` hook + refactor الـ DepositModal + refactor الـ PricingSection).
 - الباكند لم نلمسه — الفرع منشأ فقط لتسجيل عدم وجود تغييرات.
 
 ## أقسام التقرير
@@ -82,7 +82,7 @@
 
 | Method | Path | Mobile | Frontend |
 |--------|------|--------|----------|
-| GET  | `/session-packs` | `getSessionPacksApi` (fixed mapper — section 2) | ⚠️ hardcoded (مهمة #11) |
+| GET  | `/session-packs` | `getSessionPacksApi` (fixed mapper — section 2) | `useWalletBundles` (جديد — section 2.b) |
 | POST | `/session-packs/purchase` | `purchasePackApi` | — |
 | POST | `/session-packs/consultant/{id}/purchase` | `purchaseConsultantPackApi` | `SessionPacksSection` |
 | GET  | `/session-packs/my-balance` | `getMySessionBalanceApi` (fixed mapper) | `PaymentsPage` |
@@ -174,4 +174,29 @@
 
 إجمالي التغيير: **7 ملف خدمة معدل + 8 شاشة جديدة/معدلة + 5 routes**.
 
-> الجزء 2.b (الفرونت) والأقسام 3-4 تُكمل في تاسكات لاحقة.
+### 2.b Frontend (`kaleem-wellbeing-hub`)
+
+على نفس الفرع `claude/improve-mobile-app-nJrpj` — 4 commits تركّز على إزالة البيانات الوهمية + توحيد مصدر الباقات.
+
+#### 🔔 Notifications
+
+| Commit | الـ Path | الوصف |
+|--------|--------|--------|
+| `09757e1` | `src/pages/NotificationsPage.tsx` | استدعاء `/mark-all-as-read` كان يرد 404 لأن الباكند ما فيهوش. تم التحويل إلى `POST /notifications/mark-as-read` (نفس الـ endpoint اللي يصنّف الكل كمقروء لما الـ body فاضي — مطابق لسلوك الموبايل `markAllAsReadApi`). |
+| `09757e1` | `src/data/notificationsData.ts` | `dummyNotifications` أُفرغت — كانت 5 كائنات hardcoded تظهر للمستخدم لو الـ API فشل. الآن الـ hook يرجّع مصفوفة فاضية والـ UI يعرض empty state بشكل صحيح. |
+
+#### 💳 Wallet bundles — مصدر موحّد
+
+| Commit | الـ Path | الوصف |
+|--------|--------|--------|
+| `11af39c` | `src/hooks/useWalletBundles.ts` (جديد) | Hook جديد على React Query: يجيب الباقات من `GET /session-packs?pack_type=wallet_bundle` ويحوّلها لشكل `WalletBundle` بنفس أسماء الحقول اللي الـ UI يستعملها (`writtenFree`, `aiMessages`, `aiLabel`, `extendedChat`, `popular`, `badge`). الـ color rotation (`emerald` → `blue` → `purple`) يُسند client-side حسب ترتيب الباقات. `staleTime: 5min`. |
+| `9057782` | `src/components/dialogues/DepositModal.tsx` | استبدال `CREDIT_PACKS` المحلية بـ `useWalletBundles`. تم حذف ≈60 سطر ثابتة. أُضيف loading state (`Loader2` مع نص "جارٍ تحميل الباقات…") وحالة empty ("لا توجد باقات متاحة الآن"). الـ `pack_id` المرسل لـ `/wallet/paypal/create-order` الآن يستخدم `pack.dbId` (الـ row id الحقيقي) بدل الـ slug. |
+| `c65b942` | `src/components/sections/PricingSection.tsx` | نفس refactor الـ DepositModal مُطبّق على الصفحة الرئيسية. `CreditPack` type بقى alias لـ `WalletBundle`. الـ animations، الـ ConfirmModal، الـ HowItWorksStrip، والـ cardVariants ما اتغيرواش. أُضيف loading + empty state بنفس النمط. الميزات الاختيارية (`writtenFree > 0`, `aiMessages > 0`, `extendedChat`) الآن تُخفى بشكل مشروط بدل ما تُعرض بأصفار. |
+
+#### أثر جانبي مهم
+
+بعد commit `11af39c`: أي surface جديد يحتاج يعرض wallet top-up options (مثل settings page، onboarding، referral bonus modal) يستورد `useWalletBundles` مباشرة — ممنوع دبلـ الـ hardcode تاني. الـ source of truth بقى في Laravel migration `session_packs` مع `pack_type='wallet_bundle'`.
+
+إجمالي التغيير: **3 ملفات معدّلة + 1 hook جديد = ≈150 سطر مضاف، ≈180 سطر محذوف**.
+
+> الأقسام 3-4 تُكمل في تاسكات لاحقة.
