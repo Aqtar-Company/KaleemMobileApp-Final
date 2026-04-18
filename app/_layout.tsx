@@ -56,6 +56,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="auth/login" />
       <Stack.Screen name="auth/register" />
+      <Stack.Screen name="auth/forgot-password" />
       <Stack.Screen name="consultants/index" />
       <Stack.Screen name="consultants/[id]" />
       <Stack.Screen name="services/[id]" />
@@ -68,6 +69,10 @@ function RootLayoutNav() {
       <Stack.Screen name="journal/index" />
       <Stack.Screen name="journal/[id]" />
       <Stack.Screen name="schedule" />
+      <Stack.Screen name="ai-plans/index" />
+      <Stack.Screen name="session-packs/index" />
+      <Stack.Screen name="courses/index" />
+      <Stack.Screen name="courses/[id]" />
     </Stack>
   );
 }
