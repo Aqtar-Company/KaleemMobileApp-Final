@@ -1,14 +1,14 @@
 import { Feather } from "@expo/vector-icons";
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -20,8 +20,36 @@ import { useMood } from "@/context/MoodContext";
 import { useJournal } from "@/context/JournalContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useColors } from "@/hooks/useColors";
+import { useCurrency } from "@/hooks/useCurrency";
 import { Card, Divider } from "@/components/UI";
 import { MoodIcon } from "@/components/MoodIcon";
+import { CURRENCY_SYMBOLS, type CurrencyCode } from "@/lib/currency";
+
+const CURRENCY_LABELS: Record<CurrencyCode, string> = {
+  EGP: "جنيه مصري",
+  SAR: "ريال سعودي",
+  AED: "درهم إماراتي",
+  KWD: "دينار كويتي",
+  QAR: "ريال قطري",
+  BHD: "دينار بحريني",
+  OMR: "ريال عماني",
+  JOD: "دينار أردني",
+  MAD: "درهم مغربي",
+  USD: "دولار أمريكي",
+};
+
+const CURRENCY_ORDER: CurrencyCode[] = [
+  "EGP",
+  "SAR",
+  "AED",
+  "KWD",
+  "QAR",
+  "BHD",
+  "OMR",
+  "JOD",
+  "MAD",
+  "USD",
+];
 
 function MenuItem({
   icon,
@@ -59,6 +87,67 @@ function MenuItem({
   );
 }
 
+function CurrencyPickerModal({
+  visible,
+  current,
+  onClose,
+  onSelect,
+}: {
+  visible: boolean;
+  current: CurrencyCode;
+  onClose: () => void;
+  onSelect: (code: CurrencyCode) => void;
+}) {
+  const colors = useColors();
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+        <Pressable
+          style={[
+            styles.modalSheet,
+            { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius },
+          ]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <Text style={[styles.modalTitle, { color: colors.foreground }]}>اختر العملة</Text>
+          <ScrollView style={{ maxHeight: 400 }}>
+            {CURRENCY_ORDER.map((code) => {
+              const selected = code === current;
+              return (
+                <TouchableOpacity
+                  key={code}
+                  style={[
+                    styles.currencyRow,
+                    selected && { backgroundColor: colors.primary + "12" },
+                  ]}
+                  onPress={() => onSelect(code)}
+                >
+                  {selected && (
+                    <Feather name="check" size={18} color={colors.primary} />
+                  )}
+                  <View style={styles.currencyInfo}>
+                    <Text
+                      style={[
+                        styles.currencyLabel,
+                        { color: selected ? colors.primary : colors.foreground },
+                      ]}
+                    >
+                      {CURRENCY_LABELS[code]}
+                    </Text>
+                    <Text style={[styles.currencyCode, { color: colors.mutedForeground }]}>
+                      {code} • {CURRENCY_SYMBOLS[code]}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -66,8 +155,11 @@ export default function ProfileScreen() {
   const { entries: moodEntries, todayEntry } = useMood();
   const { entries: journalEntries } = useJournal();
   const { favorites } = useFavorites();
+  const { currency, setCurrency, format } = useCurrency();
   const colorScheme = useColorScheme();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
+
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
 
   const handleLogout = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -90,6 +182,17 @@ export default function ProfileScreen() {
       { text: "حذف", style: "destructive" },
     ]);
   };
+
+  const handleCurrencySelect = async (code: CurrencyCode) => {
+    await setCurrency(code);
+    setCurrencyModalVisible(false);
+    Haptics.selectionAsync();
+  };
+
+  const walletDisplay = format({
+    price_egp: user?.walletBalance ?? 0,
+    price_usd: user?.walletBalance ?? 0,
+  });
 
   return (
     <ScrollView
@@ -115,7 +218,7 @@ export default function ProfileScreen() {
 
         <View style={styles.statsRow}>
           <View style={[styles.statBox, { backgroundColor: colors.secondary, borderRadius: colors.radius }]}>
-            <Text style={[styles.statNumber, { color: colors.primary }]}>${user?.walletBalance || 0}</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{walletDisplay}</Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>رصيد المحفظة</Text>
           </View>
           <View style={[styles.statBox, { backgroundColor: colors.secondary, borderRadius: colors.radius }]}>
@@ -129,7 +232,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Wellness Summary */}
       <View style={styles.content}>
         <Card style={styles.wellnessCard}>
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>صحتك النفسية</Text>
@@ -183,7 +285,14 @@ export default function ProfileScreen() {
           <Divider />
           <MenuItem icon="bell" label="الإشعارات" onPress={() => router.push("/notifications")} />
           <Divider />
-          <MenuItem icon="lock" label="تغيير كلمة المرور" onPress={() => {}} />
+          <MenuItem icon="lock" label="تغيير كلمة المرور" onPress={() => router.push("/auth/forgot-password")} />
+          <Divider />
+          <MenuItem
+            icon="dollar-sign"
+            label="العملة"
+            onPress={() => setCurrencyModalVisible(true)}
+            value={`${CURRENCY_LABELS[currency]} (${CURRENCY_SYMBOLS[currency]})`}
+          />
           <Divider />
           <MenuItem
             icon="moon"
@@ -207,6 +316,12 @@ export default function ProfileScreen() {
           <MenuItem icon="calendar" label="جلساتي" onPress={() => router.push("/(tabs)/sessions")} />
           <Divider />
           <MenuItem icon="credit-card" label="محفظتي" onPress={() => router.push("/(tabs)/wallet")} />
+          <Divider />
+          <MenuItem icon="package" label="باقات الجلسات" onPress={() => router.push("/session-packs")} />
+          <Divider />
+          <MenuItem icon="cpu" label="خطط كليم AI" onPress={() => router.push("/ai-plans")} />
+          <Divider />
+          <MenuItem icon="book-open" label="الكورسات" onPress={() => router.push("/courses")} />
           <Divider />
           <MenuItem
             icon="heart"
@@ -251,6 +366,13 @@ export default function ProfileScreen() {
 
         <Text style={[styles.version, { color: colors.mutedForeground }]}>كليم v1.0.0</Text>
       </View>
+
+      <CurrencyPickerModal
+        visible={currencyModalVisible}
+        current={currency}
+        onClose={() => setCurrencyModalVisible(false)}
+        onSelect={handleCurrencySelect}
+      />
     </ScrollView>
   );
 }
@@ -264,11 +386,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   headerTitle: { fontSize: 22, fontWeight: "700", fontFamily: "Inter_700Bold" },
-  profileHero: {
-    padding: 20,
-    alignItems: "center",
-    borderBottomWidth: 1,
-  },
+  profileHero: { padding: 20, alignItems: "center", borderBottomWidth: 1 },
   avatarLarge: {
     width: 80,
     height: 80,
@@ -326,4 +444,30 @@ const styles = StyleSheet.create({
   darkModeValue: { fontSize: 13, fontFamily: "Inter_500Medium" },
   darkModeNote: { fontSize: 10, fontFamily: "Inter_400Regular" },
   version: { textAlign: "center", fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 8 },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalSheet: { width: "100%", maxWidth: 400, borderWidth: 1, padding: 16 },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
+    textAlign: "right",
+    marginBottom: 12,
+  },
+  currencyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
+  currencyInfo: { alignItems: "flex-end", flex: 1 },
+  currencyLabel: { fontSize: 15, fontFamily: "Inter_500Medium", textAlign: "right" },
+  currencyCode: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
 });
