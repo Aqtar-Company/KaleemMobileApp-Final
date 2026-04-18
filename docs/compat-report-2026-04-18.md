@@ -212,4 +212,12 @@
 | Notification preferences endpoint | ❌ غير موجود | `NotificationsTab.tsx` في الفرونت يحفظ إعدادات التنبيهات (البريد/الرسائل/App) في state محلي فقط — لا يوجد `POST /notifications/preferences` في الباكند. |
 | Session packs consultant tiers | ❌ hardcoded في الاثنين | تفاصيل الباقات (4/6/10 جلسات، discounts %) مُشفّرة مباشرة في `SessionPackController::purchaseConsultantPack` وفي `SessionPacksSection.tsx` — لا endpoint لجلبها ديناميكياً. |
 
-> الأقسام 3.b–4 تُكمل في تاسكات لاحقة.
+### 3.b Frontend (`kaleem-wellbeing-hub`)
+
+| الميزة | الحالة | التفاصيل |
+|--------|--------|----------|
+| صفحة AI Plans | ❌ غير موجودة | `useKaleemSubscription` يقرأ فقط `/ai/conversations/remaining` — لا توجد صفحة كاملة تعرض الخطط أو تتيح الاشتراك/الإلغاء. الموبايل عنده `app/ai-plans/index.tsx` شاشة كاملة تغطي `GET /ai-plans`، `POST /ai-plans/subscribe`، `POST /ai-plans/cancel`. |
+| `GET /reservations/{id}/join-token` | ❌ غير مستدعى | الـ endpoint موجود في الباكند ومستدعى في الموبايل عبر `getJoinTokenApi`، لكنه غائب عن الفرونت — زر "انضمام للجلسة" في `AppointmentsPage` لا يجلب token حقيقي. |
+| `useNotifications` hook موحّد | ❌ منطق مكرر | منطق الـ fetch والـ mark-as-read مكرر في `NotificationsDropdown.tsx` و`NotificationsPage.tsx`. يجب توحيده في hook واحد `useNotifications` لتفادي divergence مستقبلاً. |
+
+> الأقسام 3.c–4 تُكمل في تاسكات لاحقة.
