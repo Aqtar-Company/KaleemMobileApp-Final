@@ -130,4 +130,48 @@
 | GET | `/countries` | `services/lookup.ts` | `useCountries` |
 | GET | `/countries/{id}/cities` | `services/lookup.ts` | `useCities` |
 
-> الأقسام 2-4 تُكمل في تاسكات 12.3 → 12.5.
+---
+
+## 2. Fixed 🔧
+
+### 2.a Mobile (`kaleemmobileapp-final`)
+
+على فرع `claude/improve-mobile-app-nJrpj` — 12 commit تغطي الإصلاحات التالية:
+
+#### 🔥 Critical: طبقة الـ API كانت مكسورة فعليًا
+
+`services/api.ts` كان يفترض envelope `{ status, message, data }` لكل response — لكن عدة endpoints في الباكند ترجع payload مكشوف (`/session-packs`, `/ai-plans`, `/session-packs/my-balance`, `/ai-plans/my-subscription`). النتيجة: كل service بيفحص `!res.status` ويرمي خطأ "حدث خطأ" لكل استدعاءات هذه الـ endpoints.
+
+**الإصلاح** (commit `d1cac8b`):
+- أضيف `normalizeEnvelope()` يستوي 2xx responses: إذا فيها `status` تمر كما هي، وإلا يليف `{ status: true, message: "", data: <body> }`.
+- `handleResponse` أصبح يقرأ الـ `text()` أولاً يمنع حوادث JSON.parse على responses فارغة.
+
+#### 📐 Mapper fields غير متطابقة
+
+| الملف | كان يتوقع | الباكند يرجع | الحل |
+|------|---------|---------------|------|
+| `services/sessionPacks.ts` | `online_sessions`, `written_consultations`, `ai_messages` (كأشياء `{total, used}`) | `sessions_count`, `free_written_sessions`, `ai_messages_credit` (مع `name_ar`, `description_ar`, `has_extended_chat`, `discount_percent`, `original_price_*`) | إعادة كتابة الـ `ApiSessionPack` + mapper |
+| `services/aiPlans.ts`     | `messages_limit`, `has_extended_chat`, `features`       | `messages_per_month`, `is_unlimited`, `features_ar`, `billing_cycle`, `name_ar` | إعادة كتابة `ApiAiPlan` + mapper |
+| `services/sessionPacks.ts::getMySessionBalanceApi` | `{ online: { total, used }, written: { total, used } }` | `{ online_sessions: number, written_sessions: number, ai_messages: number }` (مباشرة scalars) | إعادة كتابة |
+| `services/aiPlans.ts::getMySubscriptionApi` | `plan_id`, `plan_name`, `renews_at` في الجذر | `{ subscribed, plan: {...}, messages_used, messages_limit, remaining, expires_at }` | إعادة كتابة |
+| `services/notifications.ts` | يرسل `{ ids: [] }` | `POST /notifications/mark-as-read` يتجاهل الـ body ويصنف الكل كمقروء | فصل `markAsReadApi(id)` عن `markAllAsReadApi()` مع المسارات الصحيحة |
+
+#### 🔌 خدمات وشاشات جديدة
+
+| Commit | الـ Path | الوصف |
+|--------|--------|--------|
+| `c8bc91c` | `context/NotificationsContext.tsx` | أعيد كتابته — يجيب الإشعارات من `getNotificationsApi`، optimistic updates، يحذف 5 إشعارات hardcoded |
+| `c8bc91c` | `app/auth/forgot-password.tsx` | شاشة جديدة تستدعي `forgotPasswordApi` |
+| `c8bc91c` | `app/auth/login.tsx` | ربط زر "نسيت كلمة المرور؟" (كان بلا handler) |
+| `d250457` | `app/_layout.tsx` | تسجيل 5 `Stack.Screen` جديدة (forgot-password, ai-plans, session-packs, courses/index, courses/[id]) |
+| `8f57404` | `app/ai-plans/index.tsx` | شاشة جديدة: الخطط + الاشتراك + الإلغاء |
+| `f12ce0b` | `app/session-packs/index.tsx` | شاشة جديدة: wallet bundles + balance + شراء |
+| `227d678` | `app/courses/index.tsx` + `[id].tsx` | شاشتين جديدتين |
+| `46d6b24` | `app/(tabs)/wallet.tsx` | إزالة `WALLET_PACKAGES` mock — الآن يجيب الباقات من `/session-packs?pack_type=wallet_bundle` ويستخدم `useCurrency` |
+| `ef7f2f7` | `app/(tabs)/profile.tsx` | Currency picker modal (10 عملات) + روابط للشاشات الجديدة |
+| `5d52c66` | `app/sessions/report/[id].tsx` | حذف `MOCK_SESSIONS` + `MOCK_REPORTS` — الآن يجيب الحجز من `getReservationsApi` ويعرض "التقرير قيد التجهيز" |
+| `a01461d` | `services/notifications.ts` + `NotificationsContext.tsx` | إصلاح مسارات mark-as-read (كان `{ ids: [] }` يؤدي لـ mark-all-by-mistake) |
+
+إجمالي التغيير: **7 ملف خدمة معدل + 8 شاشة جديدة/معدلة + 5 routes**.
+
+> الجزء 2.b (الفرونت) والأقسام 3-4 تُكمل في تاسكات لاحقة.
