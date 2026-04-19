@@ -232,4 +232,25 @@
 | PayPal / Apple Pay | ❌ UI وهمي | أزرار الدفع موجودة في `wallet.tsx` لكنها لا تستدعي أي API — تعرض "قريباً". |
 | Pusher real-time notifications | ❌ غير مُطبّق | الفرونت يستخدم Pusher عبر `Echo`. الموبايل يعتمد على polling فقط (`NotificationsContext` يجلب عند mount). |
 
-> القسم 4 يُكمل في التاسك التالية.
+## 4. Recommendations 📋
+
+### أولوية عالية
+
+1. **توحيد response shape في الباكند** — حالياً بعض الـ endpoints ترجع payload مكشوف (`SessionPackController`، `AiPlanController`) وبعضها يلف بـ `{ status, message, data }`. الحل: middleware أو trait `ApiResponse` يُطبّق على جميع الـ controllers.
+
+2. **إضافة `GET /reservations/{id}/report` للمستخدم** — الـ endpoint الحالي `GET /reports/{report}/download` للمستشار فقط. يجب endpoint مخصص يجيب تقرير الجلسة للمستخدم.
+
+3. **توحيد mark-as-read** — `POST /notifications/mark-as-read` يصنّف الكل إذا الـ body فاضي، و`POST /notifications/mark-as-read/{id}` للفردي.
+
+### أولوية متوسطة
+
+4. **Pusher للموبايل** — إضافة `@pusher/pusher-websocket-react-native`. يُحدّث `NotificationsContext.tsx` ليستمع لـ channel `private-user.{id}` event `NotificationSent`.
+
+5. **snake_case consistency** — الباكند يجب أن يثبّت على snake_case في كل الـ responses.
+
+### ما بعد الاختبار
+
+6. **حذف mock files** — بعد اختبار كل flow على staging:
+   - `services/mock.ts` في الموبايل
+   - `data/mockData.ts` في الموبايل
+   - أي `dummyData` متبقي في الفرونت
