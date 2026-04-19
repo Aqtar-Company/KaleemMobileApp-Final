@@ -20,7 +20,6 @@ const MONTHS_AR = [
 const DAYS_AR = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 const SESSION_TYPE_ICON: Record<string, keyof typeof Feather.glyphMap> = {
   video: "video",
-  audio: "phone",
   text: "message-square",
 };
 
@@ -179,7 +178,7 @@ export default function ScheduleScreen() {
                 </View>
                 <View style={styles.eventRight}>
                   <View style={[styles.eventTypeBadge, { backgroundColor: colors.secondary }]}>
-                    <Feather name={SESSION_TYPE_ICON[session.type]} size={13} color={colors.primary} />
+                    <Feather name={SESSION_TYPE_ICON[session.type] ?? "video"} size={13} color={colors.primary} />
                   </View>
                   <Text style={[styles.eventTime, { color: colors.primary }]}>{session.time}</Text>
                 </View>
