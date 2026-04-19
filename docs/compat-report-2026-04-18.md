@@ -220,4 +220,12 @@
 | `GET /reservations/{id}/join-token` | ❌ غير مستدعى | الـ endpoint موجود في الباكند ومستدعى في الموبايل عبر `getJoinTokenApi`، لكنه غائب عن الفرونت — زر "انضمام للجلسة" في `AppointmentsPage` لا يجلب token حقيقي. |
 | `useNotifications` hook موحّد | ❌ منطق مكرر | منطق الـ fetch والـ mark-as-read مكرر في `NotificationsDropdown.tsx` و`NotificationsPage.tsx`. يجب توحيده في hook واحد `useNotifications` لتفادي divergence مستقبلاً. |
 
-> الأقسام 3.c–4 تُكمل في تاسكات لاحقة.
+### 3.c Mobile (`kaleemmobileapp-final`)
+
+| الميزة | الحالة | التفاصيل |
+|--------|--------|------|
+| شاشة تغيير كلمة المرور | ❌ شاشة مفقودة | `changePasswordApi` موجود في `services/auth.ts`، لكن لا شاشة. زر القفل في `profile.tsx` يوجّه لـ `forgot-password` بدلاً من شاشة تغيير كلمة المرور. |
+| شاشة تعديل الملف الشخصي | ❌ handler مفقود | زر المستخدم في `profile.tsx` بلا `onPress` handler — لا توجد شاشة Edit Profile. |
+| روابط الدعم | ❌ وهمية | Help Center / Contact Us / Privacy Policy / Terms of Service كلها `onPress={() => {}}` بدون navigation أو URL. |
+
+> الأقسام 3.c (باقي البنود) و 4 تُكمل في تاسكات لاحقة.
