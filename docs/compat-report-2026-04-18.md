@@ -228,4 +228,8 @@
 | شاشة تعديل الملف الشخصي | ❌ handler مفقود | زر المستخدم في `profile.tsx` بلا `onPress` handler — لا توجد شاشة Edit Profile. |
 | روابط الدعم | ❌ وهمية | Help Center / Contact Us / Privacy Policy / Terms of Service كلها `onPress={() => {}}` بدون navigation أو URL. |
 
-> الأقسام 3.c (باقي البنود) و 4 تُكمل في تاسكات لاحقة.
+| حذف الحساب | ❌ API مفقود | الزر موجود في `profile.tsx` لكن لا `DELETE /user` في الباكند (انظر 3.a). |
+| PayPal / Apple Pay | ❌ UI وهمي | أزرار الدفع موجودة في `wallet.tsx` لكنها لا تستدعي أي API — تعرض "قريباً". |
+| Pusher real-time notifications | ❌ غير مُطبّق | الفرونت يستخدم Pusher عبر `Echo`. الموبايل يعتمد على polling فقط (`NotificationsContext` يجلب عند mount). |
+
+> القسم 4 يُكمل في التاسك التالية.
