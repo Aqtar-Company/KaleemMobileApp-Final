@@ -22,8 +22,7 @@ import { useConsultant } from "@/hooks/useConsultants";
 import { Badge, Button } from "@/components/UI";
 
 const SESSION_TYPES = [
-  { id: "video", icon: "video" as const, label: "فيديو" },
-  { id: "audio", icon: "phone" as const, label: "صوتي" },
+  { id: "video", icon: "video" as const, label: "أونلاين" },
   { id: "text", icon: "message-square" as const, label: "كتابي" },
 ];
 
@@ -92,7 +91,7 @@ export default function ConsultantDetailScreen() {
         "رصيد غير كافٍ",
         `رصيدك الحالي $${user?.walletBalance}. سعر الجلسة $${price}. هل تريد شحن محفظتك؟`,
         [
-          { text: "لاحقاً", style: "cancel" },
+          { text: "لاحقًا", style: "cancel" },
           { text: "شحن الآن", onPress: () => router.push("/(tabs)/wallet") },
         ]
       );
@@ -187,7 +186,7 @@ export default function ConsultantDetailScreen() {
 
           {consultant.services && consultant.services.length > 0 ? (
             <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>الخدمات المقدَّمة</Text>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>الخدمات المقدّمة</Text>
               <View style={styles.chipWrap}>
                 {consultant.services.map((s) => (
                   <View key={s} style={[styles.serviceChip, { backgroundColor: colors.secondary, borderRadius: 10 }]}>
