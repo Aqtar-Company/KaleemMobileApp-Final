@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   RefreshControl,
   ScrollView,
@@ -19,12 +20,11 @@ import { useReservations } from "@/hooks/useReservations";
 import { useAuth } from "@/context/AuthContext";
 import { Card, Badge } from "@/components/UI";
 import { RatingModal } from "@/components/RatingModal";
+import { cancelReservationApi, getJoinTokenApi } from "@/services/reservations";
 import type { Reservation } from "@/services/reservations";
 
 const SESSION_TYPES: Record<string, { icon: keyof typeof Feather.glyphMap; label: string }> = {
-  video: { icon: "video", label: "فيديو" },
-  voice: { icon: "phone", label: "صوتي" },
-  audio: { icon: "phone", label: "صوتي" },
+  video: { icon: "video", label: "أونلاين" },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
@@ -37,7 +37,17 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
   missed: { label: "فائتة", color: "#d4a853", bgColor: "#fffbeb" },
 };
 
-function SessionCard({ session, onRate }: { session: Reservation; onRate: (s: Reservation) => void }) {
+function SessionCard({
+  session,
+  onRate,
+  onCancel,
+  onJoin,
+}: {
+  session: Reservation;
+  onRate: (s: Reservation) => void;
+  onCancel: (s: Reservation) => void;
+  onJoin: (s: Reservation) => void;
+}) {
   const colors = useColors();
   const statusConf = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.scheduled;
   const typeConf = SESSION_TYPES[session.type] ?? SESSION_TYPES.video;
@@ -53,7 +63,7 @@ function SessionCard({ session, onRate }: { session: Reservation; onRate: (s: Re
           <View style={styles.sessionConsultantInfo}>
             <Text style={[styles.consultantName, { color: colors.foreground }]}>{session.consultantName}</Text>
             <Text style={[styles.consultantTitle, { color: colors.mutedForeground }]}>
-              {session.type === "video" ? "جلسة فيديو" : "جلسة صوتية"}
+              جلسة أونلاين
             </Text>
           </View>
         </View>
@@ -85,10 +95,14 @@ function SessionCard({ session, onRate }: { session: Reservation; onRate: (s: Re
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={[styles.actionBtn, styles.cancelBtn, { borderColor: colors.destructive }]}
+            onPress={() => onCancel(session)}
           >
             <Text style={[styles.actionBtnText, { color: colors.destructive }]}>إلغاء</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: colors.primary }]}
+            onPress={() => onJoin(session)}
+          >
             <Feather name="video" size={14} color="#fff" />
             <Text style={[styles.actionBtnText, { color: "#fff" }]}>دخول الجلسة</Text>
           </TouchableOpacity>
@@ -127,6 +141,8 @@ export default function SessionsScreen() {
   const [activeTab, setActiveTab] = useState<"upcoming" | "past" | "written">("upcoming");
   const [ratingSession, setRatingSession] = useState<Reservation | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   const upcoming = reservations.filter(
@@ -147,9 +163,52 @@ export default function SessionsScreen() {
     setRatingSession(session);
   };
 
+  const handleJoin = async (session: Reservation) => {
+    if (joiningId) return;
+    setJoiningId(session.id);
+    try {
+      const { meeting_url } = await getJoinTokenApi(session.id);
+      if (meeting_url) {
+        await Linking.openURL(meeting_url);
+      } else {
+        Alert.alert("تنبيه", "رابط الجلسة غير متاح بعد");
+      }
+    } catch {
+      Alert.alert("خطأ", "تعذّر الاتصال بالجلسة. حاول مجدداً.");
+    } finally {
+      setJoiningId(null);
+    }
+  };
+
+  const handleCancel = (session: Reservation) => {
+    Alert.alert(
+      "إلغاء الجلسة",
+      `هل تريد إلغاء جلستك مع ${session.consultantName}؟`,
+      [
+        { text: "تراجع", style: "cancel" },
+        {
+          text: "نعم، إلغاء",
+          style: "destructive",
+          onPress: async () => {
+            setCancellingId(session.id);
+            try {
+              await cancelReservationApi(session.id);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              await refetch();
+            } catch {
+              Alert.alert("خطأ", "تعذّر إلغاء الجلسة. حاول مجدداً.");
+            } finally {
+              setCancellingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleRatingSubmit = (_rating: number, _comment: string) => {
     setRatingSession(null);
-    Alert.alert("شكراً على تقييمك!", `تم إرسال تقييمك بنجاح.`);
+    Alert.alert("شكرًا على تقييمك!", `تم إرسال تقييمك بنجاح.`);
   };
 
   const currentList = activeTab === "upcoming" ? upcoming : past;
@@ -259,7 +318,13 @@ export default function SessionsScreen() {
         >
           {currentList.length > 0 ? (
             currentList.map((s) => (
-              <SessionCard key={s.id} session={s} onRate={handleRate} />
+              <SessionCard
+                key={s.id}
+                session={s}
+                onRate={handleRate}
+                onCancel={handleCancel}
+                onJoin={handleJoin}
+              />
             ))
           ) : (
             <View style={styles.empty}>
