@@ -220,4 +220,24 @@
 | `GET /reservations/{id}/join-token` | ❌ غير مستدعى | الـ endpoint موجود في الباكند ومستدعى في الموبايل عبر `getJoinTokenApi`، لكنه غائب عن الفرونت — زر "انضمام للجلسة" في `AppointmentsPage` لا يجلب token حقيقي. |
 | `useNotifications` hook موحّد | ❌ منطق مكرر | منطق الـ fetch والـ mark-as-read مكرر في `NotificationsDropdown.tsx` و`NotificationsPage.tsx`. يجب توحيده في hook واحد `useNotifications` لتفادي divergence مستقبلاً. |
 
-> الأقسام 3.c–4 تُكمل في تاسكات لاحقة.
+### 3.c Mobile (`kaleemmobileapp-final`)
+
+| الميزة | الحالة | التفاصيل |
+|--------|--------|----------|
+| شاشة Change Password | ❌ غير موجودة | `changePasswordApi` موجود في `services/auth.ts` لكن لا توجد شاشة له؛ زر القفل في الـ profile يوجه لـ forgot-password بدلاً من تغيير كلمة المرور. |
+| شاشة Edit Profile | ❌ غير موجودة | زر تعديل بيانات المستخدم في الـ profile بلا handler. |
+| روابط الدعم والسياسات | ❌ غير موجودة | روابط Help Center / Contact / Privacy / Terms كلها `onPress={() => {}}`. |
+| Delete Account | ❌ لا يوجد API | الزر موجود في الواجهة لكن لا يوجد API في الباكند لتنفيذه. |
+| PayPal / Apple Pay UI | ❌ قيد التجهيز | يجب استدعاء الـ API وعرض رسالة "قريباً" في واجهة الدفع. |
+| Pusher real-time notifications | ❌ غير موجودة | الفرونت يستخدم Pusher للتنبيهات اللحظية، بينما الموبايل لا يزال يعتمد على الـ polling أو الـ manual refresh. |
+
+---
+
+## 4. Recommendations 📋
+
+1.  **توحيد شكل استجابة الباكند (Response Shape):** يجب أن يلتف كل رد من الـ API بـ `{ status, message, data }` بشكل متسق لتجنب الحاجة لـ `normalizeEnvelope` في العميل.
+2.  **إضافة GET /reservations/{id}/report للمستخدم:** لتمكين المريض من قراءة تقرير الجلسة بعد انتهائها.
+3.  **توحيد endpoints الـ mark-as-read:** لتجنب الخلط بين حذف إشعار واحد وحذف الكل.
+4.  **تفعيل Pusher للموبايل:** لضمان وصول التنبيهات والرسائل فوراً دون تأخير.
+5.  **الالتزام بـ snake_case:** في تسمية الحقول في الـ JSON لتوحيد المعايير بين الباكند والعملاء.
+6.  **تنظيف الكود:** حذف `services/mock.ts` و `data/mockData.ts` في الموبايل بعد التأكد من عمل كل الـ flows مع الـ API الحقيقي.
