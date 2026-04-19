@@ -4,7 +4,7 @@ export interface CreateReservationParams {
   employee_id: number;
   from_datetime: string;
   to_datetime: string;
-  call_type: "video" | "voice";
+  call_type: "video";
   session_type?: string;
   call_subject?: string;
 }
@@ -16,7 +16,7 @@ export interface ApiReservation {
   employee_image?: string;
   from_datetime: string;
   to_datetime: string;
-  call_type: "video" | "voice";
+  call_type: "video";
   status: "scheduled" | "completed" | "cancelled" | "pending";
   call_link?: string;
   price?: number;
@@ -28,7 +28,7 @@ export interface Reservation {
   consultantAvatar?: string;
   date: string;
   time: string;
-  type: "video" | "voice";
+  type: "video";
   status: "scheduled" | "completed" | "cancelled" | "pending";
   price: number;
   callLink?: string;
@@ -42,7 +42,7 @@ function mapReservation(r: ApiReservation): Reservation {
     consultantAvatar: imageUrl(r.employee_image),
     date: dtParts[0] ?? r.from_datetime,
     time: dtParts[1]?.slice(0, 5) ?? "",
-    type: r.call_type,
+    type: "video",
     status: r.status,
     price: r.price ?? 0,
     callLink: r.call_link,
